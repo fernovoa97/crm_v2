@@ -378,7 +378,7 @@
                 </form>
                 @endif
               @else
-                <a href="{{ route('admin.leads.show', $lead) }}" class="btn-assign-single" style="text-decoration:none;">Gestionar</a>
+                <a href="{{ route('asesor.leads.index') }}" class="btn-assign-single" style="text-decoration:none;">Gestionar</a>
               @endif
             </div>
           </td>

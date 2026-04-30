@@ -1,8 +1,17 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use App\Jobs\LiberarLeadsRecall;
+use App\Jobs\ReciclarLeadsNoInteresados;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+// Cada 5 minutos: devolver leads con recall vencido al asesor
+Schedule::job(new LiberarLeadsRecall)
+    ->everyFiveMinutes()
+    ->name('liberar-leads-recall')
+    ->withoutOverlapping();
+
+// Medianoche diaria: reciclar no interesados de +30 días al admin
+Schedule::job(new ReciclarLeadsNoInteresados)
+    ->dailyAt('00:00')
+    ->name('reciclar-leads-no-interesados')
+    ->withoutOverlapping();

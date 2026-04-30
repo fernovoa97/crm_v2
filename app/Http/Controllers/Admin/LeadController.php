@@ -8,6 +8,7 @@ use App\Models\Lead;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Models\Blacklist;
 
 class LeadController extends Controller
 {
@@ -177,4 +178,141 @@ class LeadController extends Controller
 
         return false;
     }
+
+    public function asesor()
+{
+    $user = auth()->user();
+
+    if (!$user->isAsesor()) {
+        abort(403);
+    }
+
+    $gruposTipificacion = [
+        'pendiente',
+        'volver_llamar',
+        'no_interesado',
+        'no_califica',
+        'prospecto',
+    ];
+
+    $leads = [];
+    foreach ($gruposTipificacion as $tip) {
+        $query = Lead::where('assigned_to', $user->id)
+                     ->where('tipificacion', $tip)
+                     ->orderBy('created_at', 'desc');
+
+        if ($tip === 'volver_llamar') {
+            $query->orderBy('recall_at', 'asc');
+        }
+
+        $leads[$tip] = $query->get();
+    }
+
+    $counts = [
+        'total'         => array_sum(array_map(fn($c) => $c->count(), $leads)),
+        'pendiente'     => $leads['pendiente']->count(),
+        'volver_llamar' => $leads['volver_llamar']->count(),
+        'no_interesado' => $leads['no_interesado']->count(),
+        'no_califica'   => $leads['no_califica']->count(),
+        'prospecto'     => $leads['prospecto']->count(),
+        'recall_hoy'    => $leads['volver_llamar']
+                            ->filter(fn($l) => $l->recall_at && $l->recall_at->isToday())
+                            ->count(),
+    ];
+
+    return view('admin.leads.asesor', compact('leads', 'counts'));
+}
+
+public function tipificar(Request $request)
+{
+    $request->validate([
+        'lead_id'      => 'required|exists:leads,id',
+        'tipificacion' => 'required|in:volver_llamar,no_interesado,numero_equivocado,no_califica,lista_negra,prospecto',
+        'recall_at'    => 'required_if:tipificacion,volver_llamar|nullable|date|after:now',
+    ], [
+        'recall_at.required_if' => 'Debes seleccionar una fecha y hora para la rellamada.',
+        'recall_at.after'       => 'La fecha de rellamada debe ser en el futuro.',
+    ]);
+
+    $user = auth()->user();
+    $lead = Lead::where('id', $request->lead_id)
+                ->where('assigned_to', $user->id)
+                ->firstOrFail();
+
+    $tip = $request->tipificacion;
+
+    if ($tip === 'volver_llamar') {
+        $lead->update([
+            'tipificacion' => 'volver_llamar',
+            'recall_at'    => $request->recall_at,
+        ]);
+        return redirect()->route('asesor.leads.index')
+            ->with('notif_tip', "Lead agendado para el {$lead->recall_at->format('d/m/Y H:i')}.");
+    }
+
+    if ($tip === 'no_interesado') {
+        $lead->update([
+            'tipificacion' => 'no_interesado',
+            'recall_at'    => null,
+        ]);
+        return redirect()->route('asesor.leads.index')
+            ->with('notif_tip', 'Lead marcado como No interesado. Se reciclará en 30 días.');
+    }
+
+    if ($tip === 'numero_equivocado') {
+        $lead->update([
+            'tipificacion' => 'numero_equivocado',
+            'recall_at'    => null,
+        ]);
+        return redirect()->route('asesor.leads.index')
+            ->with('notif_tip', 'Lead enviado al administrador para corrección de teléfonos.');
+    }
+
+    if ($tip === 'no_califica') {
+        $lead->update([
+            'tipificacion' => 'no_califica',
+            'recall_at'    => null,
+        ]);
+        return redirect()->route('asesor.leads.index')
+            ->with('notif_tip', 'Lead marcado como No califica.');
+    }
+
+    if ($tip === 'lista_negra') {
+        Blacklist::firstOrCreate(
+            ['ruc' => $lead->ruc],
+            ['motivo' => 'Tipificado lista negra por asesor', 'created_by' => $user->id]
+        );
+
+        $telefonos = array_filter([
+            $lead->telf1, $lead->telf2, $lead->telf3,
+            $lead->telf4, $lead->telf5,
+        ]);
+
+        foreach ($telefonos as $telf) {
+            Blacklist::firstOrCreate(
+                ['telefono' => $telf],
+                ['motivo' => 'Teléfono de lead en lista negra', 'created_by' => $user->id]
+            );
+        }
+
+        $lead->update([
+            'tipificacion' => 'lista_negra',
+            'recall_at'    => null,
+        ]);
+
+        return redirect()->route('asesor.leads.index')
+            ->with('notif_tip', 'RUC y teléfonos bloqueados. Lead enviado a lista negra.');
+    }
+
+    if ($tip === 'prospecto') {
+        $lead->update([
+            'tipificacion' => 'prospecto',
+            'recall_at'    => null,
+        ]);
+        return redirect()->route('asesor.leads.index')
+            ->with('notif_tip', '¡Lead movido a Prospectos! Ya puedes registrar una venta.');
+    }
+
+    return redirect()->route('asesor.leads.index');
+}
 }

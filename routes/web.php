@@ -36,4 +36,10 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('leads', LeadController::class);
 });
 
+// Rutas del asesor
+Route::middleware(['auth'])->prefix('asesor')->name('asesor.')->group(function () {
+    Route::get('leads', [LeadController::class, 'asesor'])->name('leads.index');
+    Route::post('leads/tipificar', [LeadController::class, 'tipificar'])->name('leads.tipificar');
+});
+
 require __DIR__.'/auth.php';

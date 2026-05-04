@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schedule;
 
 // Cada 5 minutos: devolver leads con recall vencido al asesor
 Schedule::job(new LiberarLeadsRecall)
-    ->everyFiveMinutes()
+    ->everyMinute()
     ->name('liberar-leads-recall')
     ->withoutOverlapping();
 

@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use App\Models\Venta;
 class Lead extends Model
 {
     protected $fillable = [
@@ -54,5 +54,10 @@ class Lead extends Model
         return Blacklist::where('ruc', $this->ruc)
             ->orWhereIn('telefono', $telefonos)
             ->exists();
+    }
+
+    public function ventas()
+    {
+        return $this->hasMany(Venta::class);
     }
 }

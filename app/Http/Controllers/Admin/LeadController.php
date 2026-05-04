@@ -10,47 +10,85 @@ use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Blacklist;
 
+use App\Exports\WrongNumberExport;
+use App\Imports\WrongNumberImport;
+
+
+
 class LeadController extends Controller
 {
-    public function index()
-    {
-        $user  = auth()->user();
-        $query = Lead::with('assignedTo');
-
-        if ($user->isAdmin()) {
-            $availableUsers = User::whereNotIn('role', ['admin', 'mesa_control'])
-                ->where('status', 'activo')
-                ->orderBy('name')
-                ->get(['id', 'name', 'role']);
-        } elseif ($user->isJefe()) {
-            $supervisorIds = $user->subordinates()->pluck('id');
-            $asesorIds     = User::whereIn('supervisor_id', $supervisorIds)->pluck('id');
-            $ids           = collect([$user->id])->merge($supervisorIds)->merge($asesorIds);
-            
-            $query->whereIn('assigned_to', $ids);
-            $availableUsers = User::whereIn('id', $supervisorIds->merge($asesorIds))
-                ->where('status', 'activo')
-                ->orderBy('name')
-                ->get(['id', 'name', 'role']);
-        } elseif ($user->isSupervisor()) {
-            $asesorIds = $user->subordinates()->pluck('id');
-            $ids       = collect([$user->id])->merge($asesorIds);
-            
-            $query->whereIn('assigned_to', $ids);
-            $availableUsers = $user->subordinates()
-                ->where('status', 'activo')
-                ->orderBy('name')
-                ->get(['id', 'name', 'role']);
-        } else {
-            // Asesores solo ven lo suyo
-            $query->where('assigned_to', $user->id);
-            $availableUsers = collect();
-        }
-
-        $leads = $query->orderBy('created_at', 'desc')->paginate(50);
-        return view('admin.leads.index', compact('leads', 'availableUsers'));
+    public function exportWrongNumber()
+{
+    if (!auth()->user()->isAdmin()) {
+        return back()->with('error', 'No tienes permiso.');
     }
 
+    return Excel::download(new WrongNumberExport(), 'numeros_equivocados.xlsx');
+}
+
+public function importWrongNumber(Request $request)
+{
+    if (!auth()->user()->isAdmin()) {
+        return back()->with('error', 'No tienes permiso.');
+    }
+
+    $request->validate([
+        'file' => 'required|mimes:xlsx,xls,csv|max:10240',
+    ]);
+
+    $import = new WrongNumberImport();
+    Excel::import($import, $request->file('file'));
+
+    $msg = "Corrección completada: {$import->updated} leads actualizados, {$import->skipped} omitidos.";
+    return redirect()->route('admin.leads.index')->with('success', $msg);
+}
+
+    public function index()
+{
+    $user  = auth()->user();
+    $query = Lead::with('assignedTo');
+    $ids   = collect(); // scope de IDs para roles no-admin
+
+    if ($user->isAdmin()) {
+        $availableUsers = User::whereNotIn('role', ['admin', 'mesa_control'])
+            ->where('status', 'activo')
+            ->orderBy('name')
+            ->get(['id', 'name', 'role']);
+    } elseif ($user->isJefe()) {
+        $supervisorIds = $user->subordinates()->pluck('id');
+        $asesorIds     = User::whereIn('supervisor_id', $supervisorIds)->pluck('id');
+        $ids           = collect([$user->id])->merge($supervisorIds)->merge($asesorIds);
+        
+        $query->whereIn('assigned_to', $ids);
+        $availableUsers = User::whereIn('id', $supervisorIds->merge($asesorIds))
+            ->where('status', 'activo')
+            ->orderBy('name')
+            ->get(['id', 'name', 'role']);
+    } elseif ($user->isSupervisor()) {
+        $asesorIds = $user->subordinates()->pluck('id');
+        $ids       = collect([$user->id])->merge($asesorIds);
+        
+        $query->whereIn('assigned_to', $ids);
+        $availableUsers = $user->subordinates()
+            ->where('status', 'activo')
+            ->orderBy('name')
+            ->get(['id', 'name', 'role']);
+    } else {
+        $query->where('assigned_to', $user->id);
+        $availableUsers = collect();
+    }
+
+    $leads = $query->orderBy('created_at', 'desc')->paginate(50);
+
+    // Conteo dentro del scope del usuario, no global
+    $wrongNumberCount = Lead::where('tipificacion', 'numero_equivocado')
+        ->when(!$user->isAdmin(), function ($q) use ($ids) {
+            $q->whereIn('assigned_to', $ids);
+        })
+        ->count();
+
+    return view('admin.leads.index', compact('leads', 'availableUsers', 'wrongNumberCount'));
+}
     public function import(Request $request)
     {
         $request->validate([
@@ -87,27 +125,26 @@ class LeadController extends Controller
             }
         }
 
-        // 🧠 2. Construir query base con protección de alcance (Scope)
-        $query = Lead::whereIn('id', $leadIds);
+        // 🧠 2. Construir query — SOLO leads sin asignar
+        $query = Lead::whereIn('id', $leadIds)
+                    ->whereNull('assigned_to');
 
-        // Si no es admin, filtramos para que solo pueda asignar lo que le pertenece
         if (!$user->isAdmin()) {
             if ($user->isJefe()) {
                 $supervisorIds = $user->subordinates()->pluck('id');
                 $asesorIds     = User::whereIn('supervisor_id', $supervisorIds)->pluck('id');
                 $myScopeIds    = collect([$user->id])->merge($supervisorIds)->merge($asesorIds);
             } elseif ($user->isSupervisor()) {
-                $asesorIds     = $user->subordinates()->pluck('id');
-                $myScopeIds    = collect([$user->id])->merge($asesorIds);
+                $asesorIds  = $user->subordinates()->pluck('id');
+                $myScopeIds = collect([$user->id])->merge($asesorIds);
             } else {
                 return back()->with('error', 'No tienes permisos para asignar leads.');
             }
-
-            // Aplicamos el filtro: debe ser de mi equipo O estar sin asignar
-            $query->where(function($q) use ($myScopeIds) {
-                $q->whereIn('assigned_to', $myScopeIds)
-                  ->orWhereNull('assigned_to');
-            });
+            // El scope aquí ya no filtra assigned_to porque son todos NULL
+            // Solo validamos que los lead_ids pertenezcan a leads accesibles por este usuario
+            $query->whereIn('id', Lead::whereIn('assigned_to', $myScopeIds)
+                                        ->orWhereNull('assigned_to')
+                                        ->pluck('id'));
         }
 
         $leads = $query->get();
@@ -162,6 +199,23 @@ class LeadController extends Controller
         return redirect()->route('admin.leads.index')->with('success', 'Lead eliminado.');
     }
 
+    public function release(Lead $lead)
+{
+    $user = auth()->user();
+
+    if ($lead->assigned_to !== $user->id) {
+        return back()->with('error', 'No puedes liberar un lead que no es tuyo.');
+    }
+
+    $lead->update([
+        'assigned_to'  => null,
+        'tipificacion' => 'pendiente',
+        'recall_at'    => null,
+    ]);
+
+    return back()->with('success', 'Lead liberado correctamente.');
+}
+
     private function canAssignTo(User $from, User $to): bool
     {
         if ($from->isAdmin()) return true;
@@ -204,6 +258,10 @@ class LeadController extends Controller
         if ($tip === 'volver_llamar') {
             $query->orderBy('recall_at', 'asc');
         }
+         if ($tip === 'prospecto') {
+        $query->withCount('ventas'); // ← agregar
+        }
+
 
         $leads[$tip] = $query->get();
     }

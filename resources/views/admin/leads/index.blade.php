@@ -4,34 +4,71 @@
 @section('subtitle', 'Importa y administra tu base de leads')
 
 @section('topbar-actions')
-  {{-- BOTÓN ASIGNAR MASIVO: Para Admin, Jefe y Supervisor --}}
-  @php
-      $user = auth()->user();
-      // Validamos usando la propiedad 'role' directamente
-      $isManager = $user->isAdmin() || $user->role === 'jefe' || $user->role === 'supervisor';
+  @php 
+    $user = auth()->user();
+    $isManager = $user->isAdmin() || $user->role === 'jefe' || $user->role === 'supervisor';
   @endphp
 
-  @if($isManager)
-    <button type="button" class="btn-assign-bulk" onclick="openBulkModal()">
-        Asignar leads
-    </button>
-  @endif
-
-  {{-- BOTÓN IMPORTAR: Estrictamente para el ADMIN --}}
-  @if($user->isAdmin())
-  <button onclick="document.getElementById('modalImport').style.display='flex'" style="
+  {{-- BOTÓN VER MIS LEADS: Solo para asesores --}}
+  @if(!$isManager)
+  <a href="{{ route('asesor.leads.index') }}" style="
     display: inline-flex; align-items: center; gap: 6px;
-    background: #2FCAF5; color: #0f0f13;
+    background: rgba(47,202,245,0.12); color: #2FCAF5;
+    border: 1px solid rgba(47,202,245,0.25);
     padding: 8px 16px; border-radius: 8px;
     font-size: 13px; font-weight: 600;
-    border: none; cursor: pointer;
-    transition: opacity 0.2s;
-  " onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#0f0f13" stroke-width="2">
-      <path d="M6 1v10M1 6h10"/>
-    </svg>
-    Importar Excel
-  </button>
+    text-decoration: none;
+  ">
+    Ver mis leads
+  </a>
+  @endif
+
+  @if($user->isAdmin())
+    {{-- Exportar números equivocados --}}
+    <a href="{{ route('admin.leads.export-wrong-number') }}" style="
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(239,159,39,0.12); color: #fac775;
+  border: 1px solid rgba(239,159,39,0.25);
+  padding: 8px 16px; border-radius: 8px;
+  font-size: 13px; font-weight: 600;
+  text-decoration: none;
+">
+  Exportar N. Equivocados
+  @if($wrongNumberCount > 0)
+  <span style="
+    background: rgba(239,159,39,0.3);
+    padding: 1px 7px; border-radius: 20px;
+    font-size: 11px;
+  ">{{ $wrongNumberCount }}</span>
+  @endif
+</a>
+
+    {{-- Reimportar números corregidos --}}
+    <button onclick="document.getElementById('modalWrongNumber').style.display='flex'" style="
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(239,159,39,0.12); color: #fac775;
+      border: 1px solid rgba(239,159,39,0.25);
+      padding: 8px 16px; border-radius: 8px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+    ">
+      Reimportar Corregidos
+    </button>
+
+    {{-- Importar Excel normal --}}
+    <button onclick="document.getElementById('modalImport').style.display='flex'" style="
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #2FCAF5; color: #0f0f13;
+      padding: 8px 16px; border-radius: 8px;
+      font-size: 13px; font-weight: 600;
+      border: none; cursor: pointer;
+      transition: opacity 0.2s;
+    " onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#0f0f13" stroke-width="2">
+        <path d="M6 1v10M1 6h10"/>
+      </svg>
+      Importar Excel
+    </button>
   @endif
 @endsection
 
@@ -39,7 +76,7 @@
 <style>
   .stats-row {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 12px;
     margin-bottom: 24px;
   }
@@ -261,12 +298,7 @@
 
 @php
     $user = auth()->user();
-    
-    // Usamos el objeto $leads que viene del Controller (es un Paginator)
-    // Para las estadísticas, filtramos la colección de leads que se están mostrando.
     $isManager = $user->isAdmin() || $user->role === 'jefe' || $user->role === 'supervisor';
-    
-    // Obtenemos los leads de la página actual para contar las tipificaciones
     $currentPageLeads = $leads->getCollection();
 @endphp
 
@@ -274,14 +306,17 @@
 <div class="stats-row">
   <div class="stat-card">
     <div class="stat-label">Total leads</div>
-    {{-- Muestra el total histórico filtrado que calculó el Controller --}}
     <div class="stat-value">{{ $leads->total() }}</div>
     <div class="stat-badge" style="background:rgba(47,202,245,0.1);color:#2FCAF5;">En base</div>
   </div>
+<div class="stat-card">
+  <div class="stat-label">Sin asignar</div>
+  <div class="stat-value">{{ $leads->getCollection()->whereNull('assigned_to')->count() }}</div>
+  <div class="stat-badge" style="background:rgba(47,202,245,0.1);color:#2FCAF5;">En esta página</div>
+</div>
   
   <div class="stat-card">
-    <div class="stat-label">Pendientes</div>
-    {{-- Contamos sobre la colección actual --}}
+    <div class="stat-label">Pendientes de tipifiación</div>
     <div class="stat-value">{{ $currentPageLeads->where('tipificacion','pendiente')->count() }}</div>
     <div class="stat-badge" style="background:rgba(136,135,128,0.15);color:#b4b2a9;">En esta página</div>
   </div>
@@ -345,7 +380,9 @@
           <th>Segmento</th>
           <th>Departamento</th>
           <th>Tipificación</th>
+          @if($isManager)
           <th>Asignado a</th>
+          @endif
           <th>Acciones</th>
         </tr>
       </thead>
@@ -365,7 +402,9 @@
               {{ ucfirst(str_replace('_', ' ', $lead->tipificacion)) }}
             </span>
           </td>
+          @if($isManager)
           <td>{{ $lead->assignedTo?->name ?? 'Sin asignar' }}</td>
+          @endif
           <td>
             <div style="display:flex;gap:6px;">
               @if($isManager)
@@ -378,13 +417,16 @@
                 </form>
                 @endif
               @else
-                <a href="{{ route('asesor.leads.index') }}" class="btn-assign-single" style="text-decoration:none;">Gestionar</a>
+                <form method="POST" action="{{ route('admin.leads.release', $lead) }}" onsubmit="return confirm('¿Liberar este lead?')" style="display:inline;">
+                  @csrf @method('PATCH')
+                  <button type="submit" class="btn-delete" style="background:rgba(239,159,39,0.08);color:#fac775;border-color:rgba(239,159,39,0.2);">Liberar</button>
+                </form>
               @endif
             </div>
           </td>
         </tr>
         @empty
-        <tr><td colspan="7"><div class="empty-state">No tienes leads asignados.</div></td></tr>
+        <tr><td colspan="{{ $isManager ? 7 : 6 }}"><div class="empty-state">No tienes leads asignados.</div></td></tr>
         @endforelse
       </tbody>
     </table>
@@ -427,8 +469,26 @@
 <div class="modal-overlay" id="modalBulk">
   <div class="modal-box">
     <div class="modal-title">Asignar leads automáticamente</div>
-    <div class="modal-sub">Se repartirán los leads visibles según los filtros aplicados.</div>
-    <div class="assign-user-list" id="bulkUserList"></div>
+    <div class="modal-sub">Se repartirán los leads libres según los filtros aplicados.</div>
+
+    <input
+      type="text"
+      id="bulkUserSearch"
+      placeholder="Buscar asesor..."
+      oninput="filterBulkUsers()"
+      style="
+        width: 100%; box-sizing: border-box;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px; padding: 7px 12px;
+        font-size: 13px; color: #fff;
+        font-family: 'Sora', sans-serif;
+        outline: none; margin-bottom: 10px;
+      "
+    />
+
+    <div class="assign-user-list" id="bulkUserList" style="max-height: 200px;"></div>
+
     <div style="display:flex;justify-content:space-between; margin-top:15px; font-size:13px; color:#fff;">
       <span>Total a repartir: <b id="assignedCount">0</b></span>
       <span>Disponibles: <b id="assignedTotal">0</b></span>
@@ -439,6 +499,32 @@
     </div>
   </div>
 </div>
+
+{{-- MODAL REIMPORTAR NÚMEROS EQUIVOCADOS --}}
+@if($user->isAdmin())
+<div class="modal-overlay" id="modalWrongNumber" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box">
+    <div class="modal-title">Reimportar números corregidos</div>
+    <div class="modal-sub">Solo actualiza leads con tipificación "Número equivocado".</div>
+    <form method="POST" action="{{ route('admin.leads.import-wrong-number') }}" enctype="multipart/form-data">
+      @csrf
+      <div class="file-drop" onclick="document.getElementById('fileWrongNumber').click()">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fac775" stroke-width="1.5" style="margin:0 auto 10px;">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <p id="fileWrongNumberName">Haz clic para seleccionar tu archivo .xlsx o .csv</p>
+        <input type="file" id="fileWrongNumber" name="file" accept=".xlsx,.xls,.csv" style="display:none"
+               onchange="document.getElementById('fileWrongNumberName').textContent = this.files[0]?.name ?? 'Archivo seleccionado'"/>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-modal-cancel" onclick="document.getElementById('modalWrongNumber').style.display='none'">Cancelar</button>
+        <button type="submit" class="btn-modal-confirm" style="background:#fac775;">Reimportar ahora</button>
+      </div>
+    </form>
+  </div>
+</div>
+@endif
+
 
 {{-- MODAL ASIGNACIÓN INDIVIDUAL --}}
 <div class="modal-overlay" id="modalSingle">
@@ -456,33 +542,50 @@
   </div>
 </div>
 
-<form id="hiddenBulkForm" method="POST" action="{{ route('admin.leads.assign') }}" style="display:none;">@csrf</form>
+{{-- Form oculto para asignación masiva --}}
+<form id="hiddenBulkForm" method="POST" action="{{ route('admin.leads.assign') }}" style="display:none;">
+  @csrf
+</form>
 
 <script>
 const availableUsers = @json($availableUsers ?? []);
 
 function closeModals() {
-  ['modalBulk', 'modalSingle', 'modalImport'].forEach(id => {
-      const el = document.getElementById(id);
-      if(el) el.style.display = 'none';
+   ['modalBulk', 'modalSingle', 'modalImport', 'modalWrongNumber'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
   });
+  const search = document.getElementById('bulkUserSearch');
+  if (search) search.value = '';
 }
 
 function filterTable() {
-  const q = document.getElementById('searchInput').value.toLowerCase();
+  const q   = document.getElementById('searchInput').value.toLowerCase();
   const tip = document.getElementById('filterTip').value;
   document.querySelectorAll('#leadsTable tbody tr[data-id]').forEach(row => {
-    const text = row.textContent.toLowerCase();
-    const matchSearch = text.includes(q);
-    const matchTip = !tip || row.dataset.tip === tip;
+    const matchSearch = row.textContent.toLowerCase().includes(q);
+    const matchTip    = !tip || row.dataset.tip === tip;
     row.style.display = (matchSearch && matchTip) ? '' : 'none';
   });
 }
 
 function openBulkModal() {
-  const visible = document.querySelectorAll('#leadsTable tbody tr:not([style*="display: none"])');
-  if (!visible.length) return alert('No hay leads para asignar.');
-  document.getElementById('assignedTotal').textContent = visible.length;
+  document.getElementById('bulkUserList').innerHTML = '';
+  document.getElementById('assignedCount').textContent = 0;
+
+  const visibleRows = [];
+  document.querySelectorAll('#leadsTable tbody tr[data-id]').forEach(row => {
+    if (row.offsetParent !== null) visibleRows.push(row);
+  });
+
+  if (!visibleRows.length) return alert('No hay leads para asignar.');
+
+  // Contar solo los sin asignar (td con texto "Sin asignar")
+  const freeRows = visibleRows.filter(row => row.textContent.includes('Sin asignar'));
+
+  if (!freeRows.length) return alert('No hay leads libres para asignar.');
+
+  document.getElementById('assignedTotal').textContent = freeRows.length;
   renderUsersList('bulkUserList', true);
   document.getElementById('modalBulk').style.display = 'flex';
 }
@@ -497,7 +600,7 @@ function openSingleModal(leadId, leadName) {
 
 function renderUsersList(containerId, isBulk) {
   const container = document.getElementById(containerId);
-  if(!container) return;
+  if (!container) return;
   container.innerHTML = '';
   availableUsers.forEach(user => {
     const item = document.createElement('div');
@@ -508,7 +611,7 @@ function renderUsersList(containerId, isBulk) {
         <div class="assign-name">${user.name}</div>
         <div class="assign-role">${user.role}</div>
       </div>
-      ${isBulk 
+      ${isBulk
         ? `<input type="number" class="bulk-qty" data-user-id="${user.id}" min="0" value="0" oninput="updateAssignedCount()" style="width:60px; background:rgba(0,0,0,0.2); border:1px solid #333; color:#fff; border-radius:4px; padding:2px 5px;">`
         : `<input type="radio" name="user_id" value="${user.id}" required>`}
     `;
@@ -520,14 +623,31 @@ function updateAssignedCount() {
   let total = 0;
   document.querySelectorAll('.bulk-qty').forEach(i => total += parseInt(i.value) || 0);
   const el = document.getElementById('assignedCount');
-  if(el) el.textContent = total;
+  if (el) el.textContent = total;
+}
+
+function addHiddenInput(form, name, value) {
+  const input = document.createElement('input');
+  input.type  = 'hidden';
+  input.name  = name;
+  input.value = value;
+  form.appendChild(input);
 }
 
 function submitBulkAssign() {
   const form = document.getElementById('hiddenBulkForm');
-  form.innerHTML = '@csrf';
-  const visibleRows = document.querySelectorAll('#leadsTable tbody tr:not([style*="display: none"])');
-  visibleRows.forEach(row => addHiddenInput(form, 'lead_ids[]', row.dataset.id));
+
+  // Limpiar inputs dinámicos anteriores SIN tocar el _token
+  form.querySelectorAll('input:not([name="_token"])').forEach(el => el.remove());
+
+  // Recoger filas visibles con offsetParent (igual que openBulkModal)
+  const visibleRows = [];
+  document.querySelectorAll('#leadsTable tbody tr[data-id]').forEach(row => {
+    if (row.offsetParent !== null) {
+      visibleRows.push(row);
+      addHiddenInput(form, 'lead_ids[]', row.dataset.id);
+    }
+  });
 
   let total = 0;
   document.querySelectorAll('.bulk-qty').forEach(i => {
@@ -541,13 +661,16 @@ function submitBulkAssign() {
 
   if (total === 0) return alert('Ingresa cantidades.');
   if (total > visibleRows.length) return alert('La cantidad excede los leads disponibles.');
+
   form.submit();
 }
 
-function addHiddenInput(form, name, value) {
-  const input = document.createElement('input');
-  input.type = 'hidden'; input.name = name; input.value = value;
-  form.appendChild(input);
+function filterBulkUsers() {
+  const q = document.getElementById('bulkUserSearch').value.toLowerCase();
+  document.querySelectorAll('#bulkUserList .assign-user-item').forEach(item => {
+    const name = item.querySelector('.assign-name').textContent.toLowerCase();
+    item.style.display = name.includes(q) ? '' : 'none';
+  });
 }
 </script>
 @endsection

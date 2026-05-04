@@ -118,17 +118,17 @@
 
   /* ── CELL COMPONENTS ── */
   .ruc-cell .ruc   { font-weight: 600; color: #fff; font-size: 12px; }
-  .ruc-cell .razon { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+  .ruc-cell .razon { font-size: 12px; color: rgb(252, 251, 251); margin-top: 2px; }
 
   .telf-list { font-size: 11px; line-height: 1.7; }
   .telf-list span { display: block; }
 
   .ops { display: flex; gap: 4px; flex-wrap: wrap; }
   .op { font-size: 10px; padding: 2px 7px; border-radius: 5px; font-weight: 600; }
-  .op-mv { background: rgba(0,130,255,.12);  color: #6cb0ff; }
-  .op-en { background: rgba(255,100,0,.10);  color: #ffaa66; }
+  .op-en { background: rgba(0,130,255,.12);  color: #2169bb; }
+  .op-mv { background: rgba(255,100,0,.10);  color: #2FCAF5; }
   .op-cl { background: rgba(220,0,0,.10);    color: #ff8080; }
-  .op-bt { background: rgba(100,200,100,.1); color: #90cc90; }
+  .op-bt { background: rgba(100,200,100,.1); color: #e3e768; }
 
   .tip-badge {
     display: inline-flex; align-items: center; gap: 5px;
@@ -439,6 +439,7 @@
       <thead>
         <tr>
           <th>Empresa / RUC</th>
+          <th>Representante Legal</th>
           <th>Teléfonos</th>
           <th>Operadoras</th>
           <th>Tipificación</th>
@@ -454,6 +455,7 @@
               <div class="razon">{{ $lead->razon_social }}</div>
             </div>
           </td>
+          <td>{{ $lead->nombre_rl ?? '—' }}</td>
           <td>
             <div class="telf-list">
               @foreach(array_filter([$lead->telf1,$lead->telf2,$lead->telf3,$lead->telf4,$lead->telf5]) as $t)
@@ -475,10 +477,16 @@
               onclick="openTipModal({{ $lead->id }}, '{{ addslashes($lead->razon_social) }}', '{{ $lead->ruc }}')">
               Tipificar
             </button>
+            <form method="POST" action="{{ route('admin.leads.release', $lead) }}" onsubmit="return confirm('¿Liberar este lead?')" style="display:inline;">
+              @csrf @method('PATCH')
+              <button type="submit" class="btn-tip" style="background:rgba(239,159,39,0.08);color:#fac775;border-color:rgba(239,159,39,0.2);">
+                Liberar
+              </button>
+            </form>
           </td>
         </tr>
         @empty
-        <tr><td colspan="5"><div class="empty-state">No tienes leads pendientes por trabajar.</div></td></tr>
+        <tr><td colspan="6"><div class="empty-state">No tienes leads asignados.</div></td></tr>
         @endforelse
       </tbody>
     </table>
@@ -578,11 +586,11 @@
       <tbody>
         @forelse($leads['no_interesado'] as $lead)
           @php
-            $diasDesde   = $lead->updated_at->diffInDays(now());
-            $diasRestantes = max(0, 30 - $diasDesde);
-            $pct         = min(100, ($diasDesde / 30) * 100);
-            $barColor    = $pct >= 80 ? '#ff9090' : ($pct >= 50 ? '#fac775' : '#5dcaa5');
-          @endphp
+  $diasDesde     = $lead->updated_at->startOfDay()->diffInDays(now()->startOfDay());
+  $diasRestantes = max(0, 30 - $diasDesde);
+  $pct           = round(min(100, ($diasDesde / 30) * 100));
+  $barColor      = $pct >= 80 ? '#ff9090' : ($pct >= 50 ? '#fac775' : '#5dcaa5');
+@endphp
         <tr>
           <td>
             <div class="ruc-cell">
@@ -689,10 +697,9 @@
             @endif
           </td>
           <td style="display:flex;gap:6px;flex-wrap:wrap">
-            <button class="btn-venta"
-              onclick="openVentaModal({{ $lead->id }}, '{{ addslashes($lead->razon_social) }}', '{{ $lead->ruc }}')">
-              + Venta
-            </button>
+            <a href="{{ route('asesor.ventas.create', ['lead_id' => $lead->id]) }}" class="btn-venta" style="text-decoration:none;">
+  + Venta
+</a>
             <button class="btn-tip"
               onclick="openTipModal({{ $lead->id }}, '{{ addslashes($lead->razon_social) }}', '{{ $lead->ruc }}')">
               Tipificar

@@ -224,20 +224,20 @@ html.light .alert-error { background: rgba(255,80,80,0.08); border-color: rgba(2
   </div>
 
   <div class="nav-section">
-    <div class="nav-label">Principal</div>
+  <div class="nav-label">Principal</div>
 
-    <a href="{{ route('dashboard') }}"
-       class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-        <rect x="2" y="2" width="5" height="5" rx="1"/>
-        <rect x="9" y="2" width="5" height="5" rx="1"/>
-        <rect x="2" y="9" width="5" height="5" rx="1"/>
-        <rect x="9" y="9" width="5" height="5" rx="1"/>
-      </svg>
-      Dashboard
-    </a>
+  <a href="{{ route('dashboard') }}"
+     class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+      <rect x="2" y="2" width="5" height="5" rx="1"/>
+      <rect x="9" y="2" width="5" height="5" rx="1"/>
+      <rect x="2" y="9" width="5" height="5" rx="1"/>
+      <rect x="9" y="9" width="5" height="5" rx="1"/>
+    </svg>
+    Dashboard
+  </a>
 
-    @if(auth()->user()->isAdmin())
+  @if(auth()->user()->isAdmin())
     <a href="{{ route('admin.users.index') }}"
        class="nav-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -248,17 +248,32 @@ html.light .alert-error { background: rgba(255,80,80,0.08); border-color: rgba(2
       </svg>
       Usuarios
     </a>
-    @endif
-
-    <a href="{{ route('admin.leads.index') }}" class="nav-item {{ request()->routeIs('admin.leads.*') ? 'active' : '' }}">
+    <a href="{{ route('admin.leads.index') }}"
+       class="nav-item {{ request()->routeIs('admin.leads.*') ? 'active' : '' }}">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
         <circle cx="8" cy="6" r="3"/>
-        <path d="M2 14c0-3 2.5-5 6-5s6 2 6 5"/>
-        <path d="M11 3l1.5 1.5L14 3"/>
+        <path d="M2 14c0-3 2.5-6 6-5s6 2 6 5"/>
       </svg>
       Leads
     </a>
-
+    <a href="{{ route('admin.ventas.index') }}"
+       class="nav-item {{ request()->routeIs('admin.ventas.*') ? 'active' : '' }}">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4z"/>
+        <path d="M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/>
+        <path d="M6 8h4M6 11h2"/>
+      </svg>
+      Ventas
+    </a>
+    <a href="{{ route('admin.cacs.index') }}"
+       class="nav-item {{ request()->routeIs('admin.cacs.*') ? 'active' : '' }}">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M2 14V6l6-4 6 4v8"/>
+        <rect x="5" y="9" width="3" height="5"/>
+        <rect x="8" y="9" width="3" height="5"/>
+      </svg>
+      CACs
+    </a>
     <a href="#" class="nav-item {{ request()->routeIs('reportes.*') ? 'active' : '' }}">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="M2 12l3-4 3 2 3-5 3 3"/>
@@ -266,7 +281,58 @@ html.light .alert-error { background: rgba(255,80,80,0.08); border-color: rgba(2
       </svg>
       Reportes
     </a>
-  </div>
+  @endif
+
+  @if(auth()->user()->isJefe() || auth()->user()->isSupervisor())
+    <a href="{{ route('admin.leads.index') }}"
+       class="nav-item {{ request()->routeIs('admin.leads.*') ? 'active' : '' }}">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="8" cy="6" r="3"/>
+        <path d="M2 14c0-3 2.5-6 6-5s6 2 6 5"/>
+      </svg>
+      Leads
+    </a>
+    <a href="#" class="nav-item">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M2 12l3-4 3 2 3-5 3 3"/>
+        <path d="M2 14h12"/>
+      </svg>
+      Reportes
+    </a>
+  @endif
+
+  @if(auth()->user()->isAsesor())
+    <a href="{{ route('asesor.leads.index') }}"
+       class="nav-item {{ request()->routeIs('asesor.leads.*') ? 'active' : '' }}">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="8" cy="6" r="3"/>
+        <path d="M2 14c0-3 2.5-5 6-5s6 2 6 5"/>
+      </svg>
+      Mis leads
+    </a>
+    <a href="{{ route('asesor.ventas.index') }}"
+       class="nav-item {{ request()->routeIs('asesor.ventas.*') ? 'active' : '' }}">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4z"/>
+        <path d="M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/>
+        <path d="M6 8h4M6 11h2"/>
+      </svg>
+      Mis ventas
+    </a>
+  @endif
+
+  @if(auth()->user()->isMesaControl())
+    <a href="{{ route('mesa.ventas.index') }}"
+       class="nav-item {{ request()->routeIs('mesa.ventas.*') ? 'active' : '' }}">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4z"/>
+        <path d="M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/>
+        <path d="M6 8h4M6 11h2"/>
+      </svg>
+      Ventas
+    </a>
+  @endif
+</div>
 
   <div class="sidebar-footer">
     <div class="user-info">

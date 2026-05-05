@@ -568,7 +568,7 @@
             <span>📄</span>
             <span>{{ $doc->nombre_original }}</span>
             <span style="color:rgba(255,255,255,0.25);font-size:11px;">{{ number_format($doc->size / 1024, 0) }} KB</span>
-            <a href="{{ route('asesor.ventas.documento.download', $doc) }}"
+            <a href="{{ route('admin.ventas.documento.download', $doc) }}"
                style="margin-left:auto;font-size:11px;color:#2FCAF5;text-decoration:none;">
               Descargar
             </a>
@@ -619,29 +619,61 @@
       </div>
     </div>
 
-    {{-- Solicitar edición --}}
-    @if(!in_array($venta->estado, ['completada', 'borrador']))
+    {{-- C4: Rechazada → editar directo sin solicitud --}}
+    @if($venta->estado === 'rechazada')
+    <div class="sidebar-card" style="border-color:rgba(255,80,80,0.3);">
+      <div class="sidebar-title" style="color:#ff9090;">🔧 Corregir venta</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:12px;line-height:1.5;">
+        Mesa rechazó esta venta. Puedes corregirla y reenviarla directamente.
+      </div>
+      <a href="{{ route('asesor.ventas.edit', $venta) }}" class="btn-solicitar"
+         style="display:block;text-align:center;text-decoration:none;
+                background:rgba(255,80,80,0.1);color:#ff9090;border-color:rgba(255,80,80,0.3);">
+        ✏️ Corregir y reenviar
+      </a>
+    </div>
+
+    {{-- C3: Mesa aprobó edición → editar --}}
+    @elseif($venta->estado === 'en_proceso' && !$venta->solicitud_edicion)
+    <div class="sidebar-card" style="border-color:rgba(239,159,39,0.3);">
+      <div class="sidebar-title" style="color:#fac775;">✏️ Edición aprobada</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:12px;line-height:1.5;">
+        Mesa de Control aprobó tu solicitud. Ya puedes editar esta venta.
+      </div>
+      <a href="{{ route('asesor.ventas.edit', $venta) }}" class="btn-solicitar"
+         style="display:block;text-align:center;text-decoration:none;">
+        ✏️ Editar venta
+      </a>
+    </div>
+
+    {{-- Solicitud pendiente --}}
+    @elseif($venta->solicitud_edicion)
+    <div class="sidebar-card">
+      <div class="sidebar-title">Edición solicitada</div>
+      <div style="font-size:12px;color:#fac775;margin-bottom:10px;">
+        ⏳ Solicitud pendiente de aprobación por Mesa de Control.
+      </div>
+      <form method="POST" action="{{ route('asesor.ventas.solicitar-edicion', $venta) }}">
+        @csrf
+        <input type="hidden" name="motivo" value="">
+        <button type="submit" class="btn-solicitar"
+                style="background:rgba(255,80,80,0.08);color:#ff9090;border-color:rgba(255,80,80,0.2);">
+          Cancelar solicitud
+        </button>
+      </form>
+    </div>
+
+    {{-- Enviada → puede solicitar edición --}}
+    @elseif($venta->estado === 'enviada')
     <div class="sidebar-card">
       <div class="sidebar-title">Solicitar edición</div>
-      @if($venta->solicitud_edicion)
-        <div style="font-size:12px;color:#fac775;margin-bottom:10px;">
-          ⏳ Solicitud pendiente de aprobación por Mesa de Control.
-        </div>
-        <form method="POST" action="{{ route('asesor.ventas.solicitar-edicion', $venta) }}">
-          @csrf
-          <input type="hidden" name="motivo" value="">
-          <button type="submit" class="btn-solicitar" style="background:rgba(255,80,80,0.08);color:#ff9090;border-color:rgba(255,80,80,0.2);">
-            Cancelar solicitud
-          </button>
-        </form>
-      @else
-        <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:12px;">
-          Si necesitas corregir algún dato, solicita permiso a Mesa de Control.
-        </div>
-        <button type="button" class="btn-solicitar" onclick="document.getElementById('overlaySolicitud').classList.add('open')">
-          ✏️ Solicitar edición
-        </button>
-      @endif
+      <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:12px;">
+        Si necesitas corregir algún dato, solicita permiso a Mesa de Control.
+      </div>
+      <button type="button" class="btn-solicitar"
+              onclick="document.getElementById('overlaySolicitud').classList.add('open')">
+        ✏️ Solicitar edición
+      </button>
     </div>
     @endif
 

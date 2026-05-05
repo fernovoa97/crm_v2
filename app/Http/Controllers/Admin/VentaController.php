@@ -314,6 +314,139 @@ public function asesorShow(Venta $venta)
     return view('asesor.ventas.show', compact('venta'));
 }
 
+// ── ASESOR: formulario de edición ────────────────────────────
+public function edit(Venta $venta)
+{
+    $user = auth()->user();
+
+    if ($venta->asesor_id !== $user->id) abort(403);
+
+    // Solo permite editar si rechazada o en_proceso (mesa aprobó)
+    if (!in_array($venta->estado, ['rechazada', 'en_proceso'])) {
+        return redirect()->route('asesor.ventas.show', $venta)
+            ->with('error', 'Esta venta no puede editarse en su estado actual.');
+    }
+
+    $venta->load(['lead', 'lineas', 'documentos']);
+    return view('asesor.ventas.edit', compact('venta'));
+}
+
+// ── ASESOR: guardar edición ───────────────────────────────────
+public function update(Request $request, Venta $venta)
+{
+    $user = auth()->user();
+
+    if ($venta->asesor_id !== $user->id) abort(403);
+
+    if (!in_array($venta->estado, ['rechazada', 'en_proceso'])) {
+        return redirect()->route('asesor.ventas.show', $venta)
+            ->with('error', 'Esta venta no puede editarse en su estado actual.');
+    }
+
+    // Mismas reglas de validación que el store
+    $rules = [
+        'tipo_ingreso'           => 'required|in:pdv,centralizado,almacen_propio',
+        'nombre_representante'   => 'required|string',
+        'tipo_documento'         => 'required|in:dni,ce',
+        'nro_documento'          => 'required|string|max:20',
+        'telefono_representante' => 'required|string',
+        'correo'                 => 'required|email',
+    ];
+
+    if ($venta->tipo === 'fija') {
+        $rules = array_merge($rules, [
+            'tipo_venta_fija'       => 'required|in:alta,porta',
+            'direccion_instalacion' => 'required|string',
+            'tecnologia'            => 'required|in:hfc,ftth',
+            'campana_fija'          => 'required',
+            'tipo_producto_fija'    => 'required|in:1play,2play,3play',
+        ]);
+    }
+
+    if ($venta->tipo === 'movil') {
+        $rules = array_merge($rules, [
+            'tipo_venta_movil' => 'required|in:alta,porta,renovacion',
+            'tipo_entrega'     => 'required|in:delivery,recojo_cac',
+            'campana_movil'    => 'required|in:claro_negocios,claro_emprendedor',
+            'fecha_despacho'   => 'required|date',
+            'rango_horario'    => 'required|in:sla_3h,9-11,11-1,2-4,4-6',
+            'lineas'           => 'required|array|min:1',
+        ]);
+    }
+
+    $request->validate($rules);
+
+    // Campos editables por el asesor
+    $campos = [
+        'tipo_ingreso', 'nombre_representante', 'tipo_documento',
+        'nro_documento', 'telefono_representante', 'correo',
+
+        // Fija
+        'tipo_venta_fija', 'operador_cedente_fija', 'telefono_fijo_migrar',
+        'coordenadas_cobertura', 'plano_cobertura',
+        'direccion_instalacion', 'referencia_direccion_instalacion',
+        'direccion_facturacion_fija', 'telefono_sot', 'tecnologia',
+        'campana_fija', 'tipo_producto_fija',
+        'plan_telefonia', 'plan_cable_standar', 'plan_cable_superior',
+        'plan_internet_200', 'plan_internet_400', 'plan_internet_1500',
+        'cantidad_decos', 'cantidad_repetidores',
+        'precio_servicio', 'bono_fija', 'descuento_fija',
+        'full_claro', 'nro_movil_fullclaro',
+
+        // Móvil
+        'tipo_venta_movil', 'tipo_entrega', 'cac_id',
+        'coordenadas_geodir', 'plano_geodir',
+        'direccion_entrega', 'referencias_entrega',
+        'direccion_facturacion_movil', 'telefono_biometria',
+        'telefono_referencia_movil', 'campana_movil',
+        'fecha_despacho', 'rango_horario', 'comentario_despacho',
+    ];
+
+    $venta->fill($request->only($campos));
+
+    // Al guardar siempre vuelve a "enviada" y limpia flags de edición
+    $venta->estado              = 'enviada';
+    $venta->solicitud_edicion   = false;
+    $venta->motivo_rechazo      = null;
+    $venta->save();
+
+    // Actualizar líneas si es móvil
+    if ($venta->tipo === 'movil' && $request->has('lineas')) {
+        $venta->lineas()->delete();
+        foreach ($request->lineas as $linea) {
+            VentaLinea::create([
+                'venta_id'              => $venta->id,
+                'nro_portar'            => $linea['nro_portar'] ?? null,
+                'plan'                  => $linea['plan'],
+                'operador_cedente'      => $linea['operador_cedente'] ?? null,
+                'operador_cedente_otro' => $linea['operador_cedente_otro'] ?? null,
+                'equipo_sim'            => $linea['equipo_sim'],
+                'descuento'             => $linea['descuento'],
+                'nro_wf'                => $linea['nro_wf'] ?? null,
+                'large_asociada'        => $linea['large_asociada'] ?? null,
+            ]);
+        }
+    }
+
+    // Documentos adicionales
+    if ($request->hasFile('documentos')) {
+        foreach ($request->file('documentos') as $file) {
+            $path = $file->store('ventas/documentos', 'private');
+            VentaDocumento::create([
+                'venta_id'        => $venta->id,
+                'nombre_original' => $file->getClientOriginalName(),
+                'path'            => $path,
+                'mime_type'       => $file->getMimeType(),
+                'size'            => $file->getSize(),
+                'subido_por'      => $user->id,
+            ]);
+        }
+    }
+
+    return redirect()->route('asesor.ventas.show', $venta)
+        ->with('success', 'Venta corregida y reenviada a Mesa de Control.');
+}
+
 // ── ASESOR: solicitar edición ─────────────────────────────────
 public function solicitarEdicion(Request $request, Venta $venta)
 {

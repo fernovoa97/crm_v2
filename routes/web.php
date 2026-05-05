@@ -67,6 +67,8 @@ Route::middleware(['auth'])->prefix('asesor')->name('asesor.')->group(function (
     // Con parámetros al final
     Route::get('ventas/documentos/{documento}', [VentaController::class, 'downloadDocumento'])->name('ventas.documento.download');
     Route::get('ventas/{venta}', [VentaController::class, 'asesorShow'])->name('ventas.show');
+    Route::get('ventas/{venta}/edit', [VentaController::class, 'edit'])->name('ventas.edit');
+    Route::put('ventas/{venta}', [VentaController::class, 'update'])->name('ventas.update');
     Route::post('ventas/{venta}/solicitar-edicion', [VentaController::class, 'solicitarEdicion'])->name('ventas.solicitar-edicion');
 });
 

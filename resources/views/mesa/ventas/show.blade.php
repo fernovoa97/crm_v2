@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Procesar Venta')
-@section('subtitle', '{{ $venta->razon_social }} â€” {{ $venta->created_at->format("d/m/Y") }}')
+@section('subtitle'){{ $venta->razon_social }} — {{ $venta->created_at->format('d/m/Y') }}@endsection
 
 @section('topbar-actions')
   <a href="{{ route('mesa.ventas.index') }}" style="

@@ -982,10 +982,28 @@
     </div>
 
     <div class="sidebar-card">
-      <button type="submit" class="btn-submit" id="btnSubmit" disabled>
+      {{-- Errores de validación del servidor --}}
+      @if($errors->any())
+        <div id="serverErrors" style="
+          background: rgba(255,80,80,0.1);
+          border: 1px solid rgba(255,80,80,0.3);
+          border-radius: 8px;
+          padding: 12px 14px;
+          margin-bottom: 12px;
+        ">
+          <div style="font-size:12px;font-weight:700;color:#ff9090;margin-bottom:6px;">⚠ Corrige estos campos:</div>
+          <ul style="margin:0;padding-left:16px;">
+            @foreach($errors->all() as $error)
+              <li style="font-size:11px;color:#ff9090;margin-bottom:3px;">{{ $error }}</li>
+            @endforeach
+          </ul>
+        </div>
+      @endif
+
+      <button type="submit" class="btn-submit" id="btnSubmit">
         Enviar a Mesa de Control
       </button>
-      <div style="font-size:11px;color:rgba(255,255,255,0.25);text-align:center;margin-top:8px;">
+      <div id="submitHint" style="font-size:11px;color:rgba(255,255,255,0.25);text-align:center;margin-top:8px;">
         Completa todos los campos requeridos
       </div>
     </div>
@@ -1446,15 +1464,163 @@ function previewDocs(input) {
   });
 }
 
-// ── VALIDACIÓN SUBMIT ─────────────────────
-function checkSubmit() {
-  const tipo = document.getElementById('inputTipo').value;
+// ── VALIDACIÓN COMPLETA ANTES DE ENVIAR ───
+function getValidationErrors() {
+  const tipo        = document.getElementById('inputTipo').value;
   const tipoIngreso = document.querySelector('input[name="tipo_ingreso"]')?.value;
-  let ok = tipo && tipoIngreso;
-  document.getElementById('btnSubmit').disabled = !ok;
+  const errors      = [];
+
+  if (!tipo)        { errors.push('Selecciona el tipo de servicio (Móvil o Fija).'); return errors; }
+  if (!tipoIngreso) { errors.push('Selecciona el tipo de ingreso (PDV, Centralizado, etc.).'); }
+
+  // Datos del cliente (paso 3)
+  const nombreRep = document.querySelector('input[name="nombre_representante"]')?.value?.trim();
+  const tipoDoc   = document.querySelector('input[name="tipo_documento"]')?.value;
+  const nroDoc    = document.getElementById('inputNroDoc')?.value?.trim();
+  const telefono  = document.querySelector('input[name="telefono_representante"]')?.value?.trim();
+  const correo    = document.querySelector('input[name="correo"]')?.value?.trim();
+
+  if (!nombreRep) errors.push('Ingresa el nombre del representante.');
+  if (!tipoDoc)   errors.push('Selecciona el tipo de documento (DNI o CE).');
+  if (!nroDoc)    errors.push('Ingresa el número de documento.');
+  if (!telefono)  errors.push('Ingresa el teléfono del representante.');
+  if (!correo)    errors.push('Ingresa el correo electrónico.');
+
+  // Campos específicos de FIJA
+  if (tipo === 'fija') {
+    const tipoVentaFija   = document.querySelector('input[name="tipo_venta_fija"]')?.value;
+    const direccion       = document.querySelector('input[name="direccion_instalacion"]')?.value?.trim();
+    const tecnologia      = document.querySelector('input[name="tecnologia"]')?.value;
+    const campana         = document.querySelector('input[name="campana_fija"]')?.value;
+    const tipoProducto    = document.querySelector('input[name="tipo_producto_fija"]')?.value;
+
+    if (!tipoVentaFija) errors.push('Selecciona el tipo de venta fija (Alta o Portabilidad).');
+    if (!direccion)     errors.push('Ingresa la dirección de instalación.');
+    if (!tecnologia)    errors.push('Selecciona la tecnología (HFC o FTTH).');
+    if (!campana)       errors.push('Selecciona la campaña fija.');
+    if (!tipoProducto)  errors.push('Selecciona el tipo de producto (1Play, 2Play o 3Play).');
+
+    // Validar que los combos de planes estén seleccionados
+    const combos = document.querySelectorAll('.combo-plan');
+    combos.forEach(sel => {
+      if (!sel.value) errors.push('Selecciona todos los planes del servicio fijo.');
+    });
+  }
+
+  // Campos específicos de MÓVIL
+  if (tipo === 'movil') {
+    const tipoVentaMovil = document.querySelector('input[name="tipo_venta_movil"]')?.value;
+    const tipoEntrega    = document.querySelector('input[name="tipo_entrega"]')?.value;
+    const campana        = document.querySelector('input[name="campana_movil"]')?.value;
+    const fechaDespacho  = document.querySelector('input[name="fecha_despacho"]')?.value;
+    const rangoHorario   = document.querySelector('input[name="rango_horario"]')?.value;
+
+    if (!tipoVentaMovil) errors.push('Selecciona el tipo de venta móvil.');
+    if (!tipoEntrega)    errors.push('Selecciona el tipo de entrega (Delivery o Recojo en CAC).');
+    if (!campana)        errors.push('Selecciona la campaña móvil.');
+    if (!fechaDespacho)  errors.push('Ingresa la fecha de despacho.');
+    if (!rangoHorario)   errors.push('Selecciona el rango horario.');
+
+    // Delivery: dirección requerida
+    if (tipoEntrega === 'delivery') {
+      const dir = document.querySelector('input[name="direccion_entrega"]')?.value?.trim();
+      if (!dir) errors.push('Ingresa la dirección de entrega (delivery).');
+    }
+
+    // CAC: debe estar seleccionado
+    if (tipoEntrega === 'recojo_cac') {
+      const cacId = document.getElementById('inputCacId')?.value;
+      if (!cacId) errors.push('Selecciona un CAC para el recojo.');
+    }
+
+    // Líneas: al menos una con plan
+    const lineas = document.querySelectorAll('#lineasBody tr');
+    if (!lineas.length) {
+      errors.push('Agrega al menos una línea.');
+    } else {
+      let sinPlan = false;
+      lineas.forEach(tr => {
+        const plan = tr.querySelector('select[name*="[plan]"]')?.value;
+        if (!plan) sinPlan = true;
+      });
+      if (sinPlan) errors.push('Todas las líneas deben tener un plan seleccionado.');
+    }
+  }
+
+  return errors;
 }
+
+function showClientErrors(errors) {
+  // Quitar error previo si existe
+  const prev = document.getElementById('clientErrors');
+  if (prev) prev.remove();
+
+  if (!errors.length) return true;
+
+  const div = document.createElement('div');
+  div.id = 'clientErrors';
+  div.style.cssText = `
+    background: rgba(255,80,80,0.1);
+    border: 1px solid rgba(255,80,80,0.3);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    animation: fadeIn .2s ease;
+  `;
+  div.innerHTML = `
+    <div style="font-size:12px;font-weight:700;color:#ff9090;margin-bottom:6px;">⚠ Completa los campos requeridos:</div>
+    <ul style="margin:0;padding-left:16px;">
+      ${errors.map(e => `<li style="font-size:11px;color:#ff9090;margin-bottom:3px;">${e}</li>`).join('')}
+    </ul>
+  `;
+
+  const sidebarCard = document.getElementById('btnSubmit').parentElement;
+  sidebarCard.insertBefore(div, sidebarCard.firstChild);
+  div.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  return false;
+}
+
+// ── CHECKSUBMIT (mantiene apariencia visual) ─────────
+function checkSubmit() {
+  const tipo        = document.getElementById('inputTipo').value;
+  const tipoIngreso = document.querySelector('input[name="tipo_ingreso"]')?.value;
+  const btn         = document.getElementById('btnSubmit');
+  const hint        = document.getElementById('submitHint');
+
+  const listo = tipo && tipoIngreso;
+  btn.style.opacity  = listo ? '1' : '0.5';
+  btn.style.cursor   = listo ? 'pointer' : 'not-allowed';
+  if (hint) hint.style.display = listo ? 'none' : 'block';
+}
+
+// ── SUBMIT: validar antes de enviar ──────────────────
+document.getElementById('formVenta').addEventListener('submit', function(e) {
+  const errors = getValidationErrors();
+
+  if (errors.length) {
+    e.preventDefault();
+    showClientErrors(errors);
+    return;
+  }
+
+  // Feedback visual de carga
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled    = true;
+  btn.textContent = 'Enviando…';
+  btn.style.opacity = '0.7';
+});
 
 // Escuchar cambios en inputs
 document.getElementById('formVenta').addEventListener('input', checkSubmit);
+document.getElementById('formVenta').addEventListener('change', checkSubmit);
+
+// Si hay errores de servidor (old input), restaurar tipo seleccionado
+@if($errors->any() && old('tipo'))
+window.addEventListener('DOMContentLoaded', () => {
+  const tipoOld = @json(old('tipo'));
+  if (tipoOld) setTipo(tipoOld);
+  document.getElementById('serverErrors')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+@endif
 </script>
 @endsection

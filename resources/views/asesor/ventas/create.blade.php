@@ -11,529 +11,647 @@
     padding: 8px 16px; border-radius: 8px;
     font-size: 13px; font-weight: 600;
     text-decoration: none; transition: all 0.2s;
-  ">
-    ← Volver a prospectos
-  </a>
+  ">← Volver a prospectos</a>
 @endsection
 
 @section('content')
 <style>
-  .venta-layout {
-    display: grid;
-    grid-template-columns: 1fr 320px;
-    gap: 20px;
-    align-items: start;
-  }
+/* ── RESET & VARIABLES ─────────────────────────────── */
+:root {
+  --accent:       #2FCAF5;
+  --accent-dim:   rgba(47,202,245,0.12);
+  --accent-border:rgba(47,202,245,0.3);
+  --green:        #5dcaa5;
+  --green-dim:    rgba(93,202,165,0.12);
+  --orange:       #fac775;
+  --orange-dim:   rgba(250,199,117,0.12);
+  --red:          #ff9090;
+  --red-dim:      rgba(255,80,80,0.1);
+  --surface:      #15151c;
+  --surface2:     rgba(255,255,255,0.03);
+  --border:       rgba(255,255,255,0.07);
+  --border2:      rgba(255,255,255,0.04);
+  --text:         #fff;
+  --text-muted:   rgba(255,255,255,0.4);
+  --text-faint:   rgba(255,255,255,0.2);
+  --radius-lg:    16px;
+  --radius-md:    10px;
+  --radius-sm:    7px;
+}
 
-  .card {
-    background: #15151c;
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 14px;
-    overflow: hidden;
-    margin-bottom: 16px;
-  }
+html.light {
+  --surface:      #ffffff;
+  --surface2:     rgba(0,0,0,0.02);
+  --border:       #d8eaf8;
+  --border2:      #eef5fb;
+  --text:         #0f0f13;
+  --text-muted:   rgba(0,0,0,0.45);
+  --text-faint:   rgba(0,0,0,0.25);
+  --accent-dim:   rgba(47,202,245,0.1);
+  --accent-border:rgba(47,202,245,0.4);
+  --green-dim:    rgba(93,202,165,0.1);
+  --orange-dim:   rgba(250,199,117,0.1);
+  --red-dim:      rgba(255,80,80,0.08);
+}
 
-  .card-header {
-    padding: 14px 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
+/* ── WIZARD LAYOUT ─────────────────────────────────── */
+.wizard-wrap {
+  display: grid;
+  grid-template-columns: 200px 1fr 280px;
+  gap: 24px;
+  align-items: start;
+  max-width: 1200px;
+}
 
-  .card-header-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: #fff;
-  }
+/* ── STEPPER (izquierda) ───────────────────────────── */
+.stepper {
+  position: sticky;
+  top: 24px;
+}
 
-  .card-header-badge {
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-weight: 600;
-  }
+.stepper-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+  cursor: pointer;
+  position: relative;
+}
 
-  .card-body { padding: 20px; }
+.stepper-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 36px;
+  width: 2px;
+  height: calc(100% - 8px);
+  background: var(--border);
+  transition: background .3s;
+}
 
-  /* Tipo selector */
-  .tipo-selector {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 0;
-  }
+.stepper-item.done::after    { background: var(--green); opacity: .4; }
+.stepper-item.active::after  { background: var(--accent); opacity: .3; }
 
-  .tipo-card {
-    padding: 16px;
-    border-radius: 12px;
-    border: 2px solid rgba(255,255,255,0.07);
-    background: rgba(255,255,255,0.02);
-    cursor: pointer;
-    transition: all .2s;
-    text-align: center;
-  }
+.step-dot {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+  color: var(--text-faint);
+  flex-shrink: 0;
+  transition: all .3s;
+  position: relative;
+  z-index: 1;
+}
 
-  .tipo-card:hover { border-color: rgba(47,202,245,0.3); }
-  .tipo-card.active {
-    border-color: #2FCAF5;
-    background: rgba(47,202,245,0.08);
-  }
+.stepper-item.done  .step-dot { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+.stepper-item.active .step-dot { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); box-shadow: 0 0 0 4px rgba(47,202,245,0.08); }
 
-  .tipo-card-icon { font-size: 28px; margin-bottom: 6px; }
-  .tipo-card-name { font-size: 14px; font-weight: 600; color: #fff; }
-  .tipo-card-desc { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 3px; }
+.step-info { padding-top: 4px; }
+.step-label { font-size: 12px; font-weight: 600; color: var(--text-faint); transition: color .3s; }
+.stepper-item.active .step-label { color: var(--text); }
+.stepper-item.done  .step-label  { color: var(--text-muted); }
+.step-sub { font-size: 10px; color: var(--text-faint); margin-top: 1px; }
 
-  /* Bubble selectors */
-  .bubble-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 6px;
-  }
+/* ── CARDS ─────────────────────────────────────────── */
+.wcard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 14px;
+  transition: border-color .2s;
+}
 
-  .bubble {
-    padding: 6px 14px;
-    border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.03);
-    color: rgba(255,255,255,0.5);
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all .15s;
-    font-family: 'Sora', sans-serif;
-    user-select: none;
-  }
+.wcard.active-card { border-color: rgba(47,202,245,0.18); }
 
-  .bubble:hover { border-color: rgba(47,202,245,0.3); color: #fff; }
-  .bubble.active {
-    border-color: #2FCAF5;
-    background: rgba(47,202,245,0.12);
-    color: #2FCAF5;
-  }
+.wcard-head {
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
-  .bubble.active-green {
-    border-color: #5dcaa5;
-    background: rgba(29,158,117,0.12);
-    color: #5dcaa5;
-  }
+.wcard-num {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
 
-  .bubble.active-orange {
-    border-color: #fac775;
-    background: rgba(239,159,39,0.12);
-    color: #fac775;
-  }
+.wcard-title { font-size: 13px; font-weight: 700; color: var(--text); }
+.wcard-badge {
+  margin-left: auto;
+  font-size: 10px; font-weight: 600;
+  padding: 3px 10px; border-radius: 20px;
+  background: var(--surface2);
+  color: var(--text-faint);
+  border: 1px solid var(--border);
+}
 
-  /* Form fields */
-  .form-group { margin-bottom: 14px; }
-  .form-label {
-    font-size: 11px;
-    color: rgba(255,255,255,0.4);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .4px;
-    display: block;
-    margin-bottom: 6px;
-  }
+.wcard-body { padding: 22px; }
 
-  .form-label .required { color: #ff9090; margin-left: 2px; }
-  .form-label .hint {
-    font-size: 10px;
-    color: #fac775;
-    text-transform: none;
-    letter-spacing: 0;
-    font-weight: 500;
-    margin-left: 6px;
-  }
+/* ── TIPO SELECTOR ─────────────────────────────────── */
+.tipo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
 
-  .form-input {
-    width: 100%;
-    box-sizing: border-box;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 8px;
-    padding: 9px 12px;
-    font-size: 13px;
-    color: #fff;
-    font-family: 'Sora', sans-serif;
-    outline: none;
-    transition: border .2s;
-  }
+.tipo-opt {
+  padding: 20px 16px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border);
+  background: var(--surface2);
+  cursor: pointer;
+  transition: all .2s;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
 
-  .form-input:focus { border-color: rgba(47,202,245,0.4); }
-  .form-input::placeholder { color: rgba(255,255,255,0.2); }
-  .form-input[readonly] {
-    background: rgba(255,255,255,0.02);
-    color: rgba(255,255,255,0.4);
-    cursor: not-allowed;
-  }
+.tipo-opt::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(47,202,245,0.06) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity .3s;
+}
 
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.tipo-opt:hover { border-color: var(--accent-border); }
+.tipo-opt:hover::before { opacity: 1; }
 
-  .section-title {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .6px;
-    color: rgba(255,255,255,0.25);
-    border-top: 1px solid rgba(255,255,255,0.06);
-    padding-top: 14px;
-    margin: 18px 0 14px;
-  }
+.tipo-opt.active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+.tipo-opt.active::before { opacity: 1; }
 
-  /* Alert biometría */
-  .alert-biometria {
-    background: rgba(239,159,39,0.1);
-    border: 1px solid rgba(239,159,39,0.25);
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 12px;
-    color: #fac775;
-    margin-bottom: 14px;
-    display: none;
-  }
+.tipo-icon { font-size: 32px; margin-bottom: 8px; }
+.tipo-name { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.tipo-desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
 
-  /* Planes fija */
-  .planes-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-top: 6px;
-  }
+.tipo-check {
+  position: absolute;
+  top: 10px; right: 10px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: none;
+  align-items: center; justify-content: center;
+}
+.tipo-check::after { content: '✓'; font-size: 10px; color: #0f0f13; font-weight: 700; }
+.tipo-opt.active .tipo-check { display: flex; }
 
-  .plan-check {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.07);
-    cursor: pointer;
-    transition: all .15s;
-  }
+/* ── BUBBLES ────────────────────────────────────────── */
+.bgroup { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 7px; }
 
-  .plan-check:hover { border-color: rgba(47,202,245,0.3); }
-  .plan-check.active {
-    border-color: #2FCAF5;
-    background: rgba(47,202,245,0.08);
-  }
+.bubble {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px; font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  font-family: 'Sora', sans-serif;
+  user-select: none;
+  line-height: 1;
+}
+.bubble:hover { border-color: var(--accent-border); color: var(--text); }
+.bubble.active { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+.bubble.active-green { border-color: var(--green); background: var(--green-dim); color: var(--green); }
+.bubble.active-orange { border-color: var(--orange); background: var(--orange-dim); color: var(--orange); }
 
-  .plan-check input[type="checkbox"] { display: none; }
-  .plan-check-dot {
-    width: 14px; height: 14px;
-    border-radius: 4px;
-    border: 1.5px solid rgba(255,255,255,0.2);
-    flex-shrink: 0;
-    transition: all .15s;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .plan-check.active .plan-check-dot {
-    background: #2FCAF5;
-    border-color: #2FCAF5;
-  }
-  .plan-check.active .plan-check-dot::after {
-    content: '✓';
-    font-size: 9px;
-    color: #0f0f13;
-    font-weight: 700;
-  }
-  .plan-check-name { font-size: 11px; color: rgba(255,255,255,0.7); }
+/* ── FORM FIELDS ────────────────────────────────────── */
+.fgroup { margin-bottom: 16px; }
+.fgroup:last-child { margin-bottom: 0; }
 
-  /* Tabla líneas móvil */
-  .lineas-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-  }
+.flabel {
+  display: block;
+  font-size: 11px; font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 7px;
+}
+.flabel .req { color: var(--red); margin-left: 2px; font-weight: 700; }
+.flabel .hint {
+  font-size: 10px; color: var(--orange);
+  text-transform: none; letter-spacing: 0; font-weight: 500; margin-left: 6px;
+}
 
-  .lineas-table th {
-    font-size: 10px;
-    font-weight: 600;
-    color: rgba(255,255,255,0.25);
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    padding: 8px 10px;
-    text-align: left;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    white-space: nowrap;
-  }
+.finput {
+  width: 100%; box-sizing: border-box;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 13px;
+  font-size: 13px; color: var(--text);
+  font-family: 'Sora', sans-serif;
+  outline: none;
+  transition: border .2s, background .2s;
+}
+.finput:focus { border-color: var(--accent-border); background: rgba(47,202,245,0.03); }
+.finput::placeholder { color: var(--text-faint); }
+.finput[readonly] { background: var(--surface2); color: var(--text-muted); cursor: not-allowed; }
+.finput option { background: #1a1a24; }
 
-  .lineas-table td {
-    padding: 8px 6px;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    vertical-align: middle;
-  }
+html.light .finput { background: #f2f7fd; border-color: var(--border); color: var(--text); }
+html.light .finput:focus { background: #eaf4ff; }
+html.light .finput[readonly] { background: #eef5fb; }
 
-  .lineas-table tr:last-child td { border-bottom: none; }
+.frow   { display: grid; grid-template-columns: 1fr 1fr;     gap: 14px; }
+.frow-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
 
-  .linea-input {
-    width: 100%;
-    box-sizing: border-box;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 6px;
-    padding: 6px 8px;
-    font-size: 11px;
-    color: #fff;
-    font-family: 'Sora', sans-serif;
-    outline: none;
-  }
+.fsep {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .6px;
+  color: var(--text-faint);
+  border-top: 1px solid var(--border2);
+  padding-top: 16px;
+  margin: 20px 0 16px;
+}
 
-  .linea-input:focus { border-color: rgba(47,202,245,0.3); }
+/* ── ALERT BIOMETRÍA ────────────────────────────────── */
+.alert-bio {
+  display: none;
+  background: var(--orange-dim);
+  border: 1px solid rgba(250,199,117,0.25);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 12px; color: var(--orange);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
 
-  .linea-select {
-    width: 100%;
-    box-sizing: border-box;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 6px;
-    padding: 6px 8px;
-    font-size: 11px;
-    color: #fff;
-    font-family: 'Sora', sans-serif;
-    outline: none;
-  }
+/* ── PLANES FIJA ────────────────────────────────────── */
+.plan-check {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 13px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  cursor: pointer; transition: all .15s;
+  background: var(--surface2);
+}
+.plan-check:hover { border-color: var(--accent-border); }
+.plan-check.active { border-color: var(--accent); background: var(--accent-dim); }
+.plan-check input[type="checkbox"] { display: none; }
 
-  .linea-select option { background: #1a1a24; }
+.plan-dot {
+  width: 16px; height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid var(--border);
+  flex-shrink: 0; transition: all .15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.plan-check.active .plan-dot {
+  background: var(--accent); border-color: var(--accent);
+}
+.plan-check.active .plan-dot::after {
+  content: '✓'; font-size: 9px; color: #0f0f13; font-weight: 700;
+}
+.plan-name { font-size: 12px; color: var(--text-muted); }
+.plan-check.active .plan-name { color: var(--text); }
 
-  .btn-add-linea {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 14px;
-    border-radius: 8px;
-    border: 1px dashed rgba(47,202,245,0.3);
-    background: rgba(47,202,245,0.04);
-    color: #2FCAF5;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: 'Sora', sans-serif;
-    transition: all .15s;
-    margin-top: 10px;
-  }
+.planes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
 
-  .btn-add-linea:hover { background: rgba(47,202,245,0.1); }
+/* ── TABLA LÍNEAS ───────────────────────────────────── */
+.lineas-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-top: 10px;
+}
 
-  .btn-remove-linea {
-    background: none;
-    border: none;
-    color: rgba(255,80,80,0.5);
-    cursor: pointer;
-    font-size: 16px;
-    padding: 0 4px;
-    transition: color .15s;
-  }
+.lineas-table { width: 100%; border-collapse: collapse; }
+.lineas-table th {
+  font-size: 10px; font-weight: 700;
+  color: var(--text-faint);
+  text-transform: uppercase; letter-spacing: .5px;
+  padding: 10px 10px;
+  text-align: left;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.lineas-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--border2);
+  vertical-align: middle;
+}
+.lineas-table tr:last-child td { border-bottom: none; }
+.lineas-table tr:hover td { background: rgba(255,255,255,0.01); }
 
-  .btn-remove-linea:hover { color: #ff9090; }
+.linea-input, .linea-select {
+  width: 100%; box-sizing: border-box;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 11px; color: var(--text);
+  font-family: 'Sora', sans-serif;
+  outline: none; transition: border .15s;
+}
+.linea-input:focus, .linea-select:focus { border-color: var(--accent-border); background: rgba(47,202,245,0.04); }
+.linea-select option { background: #1a1a24; }
 
-  /* Documentos */
-  .doc-drop {
-    border: 2px dashed rgba(255,255,255,0.1);
-    border-radius: 10px;
-    padding: 24px;
-    text-align: center;
-    cursor: pointer;
-    transition: all .2s;
-  }
+html.light .linea-input, html.light .linea-select {
+  background: #f2f7fd; border-color: #e0edf8; color: var(--text);
+}
 
-  .doc-drop:hover {
-    border-color: rgba(47,202,245,0.3);
-    background: rgba(47,202,245,0.02);
-  }
+.btn-add-linea {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; margin-top: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--accent-border);
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-size: 12px; font-weight: 700;
+  cursor: pointer; font-family: 'Sora', sans-serif;
+  transition: all .15s;
+}
+.btn-add-linea:hover { background: rgba(47,202,245,0.2); }
 
-  .doc-drop p { font-size: 12px; color: rgba(255,255,255,0.3); margin-top: 8px; }
-  .doc-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
-  .doc-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: rgba(255,255,255,0.03);
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.06);
-    font-size: 12px;
-    color: rgba(255,255,255,0.6);
-  }
+.btn-remove-linea {
+  background: none; border: none;
+  color: rgba(255,80,80,0.4);
+  cursor: pointer; font-size: 18px; padding: 0 4px;
+  transition: color .15s; line-height: 1;
+}
+.btn-remove-linea:hover { color: var(--red); }
 
-  .doc-item-remove {
-    margin-left: auto;
-    background: none;
-    border: none;
-    color: rgba(255,80,80,0.4);
-    cursor: pointer;
-    font-size: 16px;
-  }
+/* ── DOCUMENTOS ─────────────────────────────────────── */
+.doc-drop {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-md);
+  padding: 28px 20px;
+  text-align: center;
+  cursor: pointer; transition: all .2s;
+  background: var(--surface2);
+}
+.doc-drop:hover { border-color: var(--accent-border); background: var(--accent-dim); }
+.doc-drop-icon { color: var(--text-faint); margin-bottom: 8px; }
+.doc-drop p { font-size: 12px; color: var(--text-faint); margin-top: 4px; }
+.doc-drop span { font-size: 11px; color: var(--text-faint); opacity: .7; }
 
-  /* Sidebar */
-  .sidebar-card {
-    background: #15151c;
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 14px;
-    padding: 18px;
-    margin-bottom: 14px;
-    position: sticky;
-    top: 20px;
-  }
+.doc-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.doc-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 13px;
+  background: var(--surface2);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 12px; color: var(--text-muted);
+}
+.doc-item-remove {
+  margin-left: auto; background: none; border: none;
+  color: rgba(255,80,80,0.4); cursor: pointer; font-size: 16px;
+}
 
-  .sidebar-title {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .6px;
-    color: rgba(255,255,255,0.25);
-    margin-bottom: 14px;
-  }
+/* ── CAC DROPDOWN ───────────────────────────────────── */
+.cac-drop {
+  position: absolute; z-index: 200;
+  background: #1c1c26;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-md);
+  margin-top: 4px; max-height: 200px;
+  overflow-y: auto; min-width: 280px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+html.light .cac-drop { background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
 
-  .sidebar-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 8px;
-    margin-bottom: 10px;
-    font-size: 12px;
-  }
+.cac-opt {
+  padding: 10px 14px; cursor: pointer;
+  border-bottom: 1px solid var(--border2); transition: background .15s;
+}
+.cac-opt:last-child { border-bottom: none; }
+.cac-opt:hover { background: var(--accent-dim); }
+.cac-opt-name { font-size: 13px; color: var(--text); font-weight: 600; }
+.cac-opt-dir  { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
-  .sidebar-label { color: rgba(255,255,255,0.35); }
-  .sidebar-value { color: #fff; font-weight: 500; text-align: right; }
+/* ── SIDEBAR PANEL ──────────────────────────────────── */
+.side-panel {
+  position: sticky; top: 24px;
+  display: flex; flex-direction: column; gap: 14px;
+}
 
-  .btn-submit {
-    width: 100%;
-    padding: 12px;
-    border-radius: 10px;
-    background: #2FCAF5;
-    color: #0f0f13;
-    border: none;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: 'Sora', sans-serif;
-    transition: opacity .2s;
-    margin-top: 4px;
-  }
+.scard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+}
 
-  .btn-submit:hover { opacity: .88; }
+.scard-title {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .8px;
+  color: var(--text-faint);
+  margin-bottom: 14px;
+}
 
-  .btn-submit-green {
-    background: #5dcaa5;
-  }
+.srow {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 8px; margin-bottom: 10px; font-size: 12px;
+}
+.srow:last-child { margin-bottom: 0; }
+.slabel { color: var(--text-muted); flex-shrink: 0; }
+.sval { color: var(--text); font-weight: 600; text-align: right; max-width: 160px; word-break: break-word; }
 
-  /* Condicionales */
-  .field-porta { display: none; }
-  .field-fullclaro { display: none; }
-  .field-dcto-plantilla { display: none; }
+/* ── PROGRESO ───────────────────────────────────────── */
+.progress-bar-wrap {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--green));
+  border-radius: 2px;
+  transition: width .4s ease;
+  width: 0%;
+}
 
-  /* CAC Dropdown */
-  .cac-option {
-    padding: 10px 14px;
-    cursor: pointer;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    transition: background .15s;
-  }
-  .cac-option:last-child { border-bottom: none; }
-  .cac-option:hover { background: rgba(47,202,245,0.08); }
-  .cac-option-nombre { font-size: 13px; color: #fff; font-weight: 500; }
-  .cac-option-dir { font-size: 11px; color: rgba(255,255,255,0.35); margin-top:2px; }
+/* ── BTN SUBMIT ─────────────────────────────────────── */
+.btn-submit {
+  width: 100%; padding: 13px;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: #0f0f13;
+  border: none;
+  font-size: 14px; font-weight: 700;
+  cursor: pointer; font-family: 'Sora', sans-serif;
+  transition: opacity .2s, transform .1s;
+  letter-spacing: .2px;
+}
+.btn-submit:hover { opacity: .9; transform: translateY(-1px); }
+.btn-submit:active { transform: translateY(0); }
+.btn-submit:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 
-  /* Light mode */
-  html.light .card { background: #fff; border-color: #d0eaf8; }
-  html.light .card-header { border-bottom-color: #e8f3fb; }
-  html.light .card-header-title { color: #0f0f13; }
-  html.light .tipo-card { border-color: #d0eaf8; background: #f8fcff; }
-  html.light .tipo-card-name { color: #0f0f13; }
-  html.light .bubble { border-color: #d0eaf8; color: rgba(0,0,0,0.5); background: #f8fcff; }
-  html.light .form-label { color: rgba(0,0,0,0.5); }
-  html.light .form-input { background: #f0f7ff; border-color: #c0dff5; color: #0f0f13; }
-  html.light .form-input[readonly] { background: #e8f3fb; color: rgba(0,0,0,0.4); }
-  html.light .section-title { color: rgba(0,0,0,0.3); border-top-color: #e8f3fb; }
-  html.light .plan-check { border-color: #d0eaf8; }
-  html.light .plan-check-name { color: rgba(0,0,0,0.6); }
-  html.light .lineas-table th { color: rgba(0,0,0,0.3); border-bottom-color: #e8f3fb; }
-  html.light .lineas-table td { border-bottom-color: #f0f7ff; }
-  html.light .linea-input, html.light .linea-select { background: #f0f7ff; border-color: #c0dff5; color: #0f0f13; }
-  html.light .sidebar-card { background: #fff; border-color: #d0eaf8; }
-  html.light .sidebar-label { color: rgba(0,0,0,0.4); }
-  html.light .sidebar-value { color: #0f0f13; }
-  html.light .doc-drop { border-color: #d0eaf8; }
-  html.light .doc-item { background: #f8fcff; border-color: #e0eef8; color: rgba(0,0,0,0.6); }
+.submit-hint {
+  font-size: 11px; color: var(--text-faint);
+  text-align: center; margin-top: 8px;
+}
+
+/* ── ERRORES ────────────────────────────────────────── */
+.err-box {
+  background: var(--red-dim);
+  border: 1px solid rgba(255,80,80,0.3);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.err-box-title { font-size: 12px; font-weight: 700; color: var(--red); margin-bottom: 6px; }
+.err-box ul { margin: 0; padding-left: 16px; }
+.err-box li { font-size: 11px; color: var(--red); margin-bottom: 3px; }
+
+/* ── ANIMATE IN ─────────────────────────────────────── */
+@keyframes slideDown {
+  from { opacity:0; transform: translateY(-8px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.wcard { animation: slideDown .25s ease; }
+
+/* ── SECTION DIVIDER ────────────────────────────────── */
+.inline-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+/* ── CAMPOS CONDICIONALES ───────────────────────────── */
+.field-porta     { display: none; }
+.field-fullclaro { display: none; }
 </style>
 
 <form method="POST" action="{{ route('asesor.ventas.store') }}" enctype="multipart/form-data" id="formVenta">
 @csrf
-<input type="hidden" name="lead_id" value="{{ $lead->id }}">
-<input type="hidden" name="tipo" id="inputTipo" value="">
+<input type="hidden" name="lead_id"   value="{{ $lead->id }}">
+<input type="hidden" name="tipo"      id="inputTipo"        value="">
 
-<div class="venta-layout">
+<div class="wizard-wrap">
 
-  {{-- ── COLUMNA PRINCIPAL ── --}}
-  <div>
+  {{-- ── STEPPER ── --}}
+  <div class="stepper" id="stepper">
+    <div class="stepper-item" id="si1" onclick="scrollToCard('c1')">
+      <div class="step-dot">1</div>
+      <div class="step-info">
+        <div class="step-label">Servicio</div>
+        <div class="step-sub">Móvil o Fija</div>
+      </div>
+    </div>
+    <div class="stepper-item" id="si2" onclick="scrollToCard('c2')">
+      <div class="step-dot">2</div>
+      <div class="step-info">
+        <div class="step-label">Ingreso y venta</div>
+        <div class="step-sub">PDV, porta, alta…</div>
+      </div>
+    </div>
+    <div class="stepper-item" id="si3" onclick="scrollToCard('c3')">
+      <div class="step-dot">3</div>
+      <div class="step-info">
+        <div class="step-label">Cliente</div>
+        <div class="step-sub">Datos del rep.</div>
+      </div>
+    </div>
+    <div class="stepper-item" id="si4" onclick="scrollToCard('c4')">
+      <div class="step-dot">4</div>
+      <div class="step-info">
+        <div class="step-label">Servicio</div>
+        <div class="step-sub">Detalles técnicos</div>
+      </div>
+    </div>
+    <div class="stepper-item" id="si5" onclick="scrollToCard('c5')">
+      <div class="step-dot">5</div>
+      <div class="step-info">
+        <div class="step-label">Documentos</div>
+        <div class="step-sub">Adjuntos opcionales</div>
+      </div>
+    </div>
+  </div>
+
+  {{-- ── COLUMNA CENTRAL ── --}}
+  <div id="mainCol">
 
     {{-- PASO 1: TIPO --}}
-    <div class="card">
-      <div class="card-header">
-        <div class="card-header-title">Paso 1 — Tipo de servicio</div>
+    <div class="wcard active-card" id="c1">
+      <div class="wcard-head">
+        <div class="wcard-num">1</div>
+        <div class="wcard-title">¿Qué tipo de servicio vas a vender?</div>
       </div>
-      <div class="card-body">
-        <div class="tipo-selector">
-          <div class="tipo-card" id="tipoMovil" onclick="setTipo('movil')">
-            <div class="tipo-card-icon">📱</div>
-            <div class="tipo-card-name">Móvil</div>
-            <div class="tipo-card-desc">Líneas, portabilidades, renovaciones</div>
+      <div class="wcard-body">
+        <div class="tipo-grid">
+          <div class="tipo-opt" id="tipoMovil" onclick="setTipo('movil')">
+            <div class="tipo-check"></div>
+            <div class="tipo-icon">📱</div>
+            <div class="tipo-name">Móvil</div>
+            <div class="tipo-desc">Líneas, portabilidades y renovaciones</div>
           </div>
-          <div class="tipo-card" id="tipoFija" onclick="setTipo('fija')">
-            <div class="tipo-card-icon">🏢</div>
-            <div class="tipo-card-name">Fija / Internet</div>
-            <div class="tipo-card-desc">Internet, telefonía fija, cable</div>
+          <div class="tipo-opt" id="tipoFija" onclick="setTipo('fija')">
+            <div class="tipo-check"></div>
+            <div class="tipo-icon">🏢</div>
+            <div class="tipo-name">Fija / Internet</div>
+            <div class="tipo-desc">Internet, telefonía fija y cable</div>
           </div>
         </div>
       </div>
     </div>
 
-    {{-- PASO 2: TIPO DE INGRESO Y TIPO DE VENTA --}}
-    <div class="card" id="paso2" style="display:none;">
-      <div class="card-header">
-        <div class="card-header-title">Paso 2 — Ingreso y tipo de venta</div>
+    {{-- PASO 2: INGRESO Y TIPO DE VENTA --}}
+    <div class="wcard" id="c2" style="display:none;">
+      <div class="wcard-head">
+        <div class="wcard-num">2</div>
+        <div class="wcard-title">Ingreso y tipo de venta</div>
       </div>
-      <div class="card-body">
-        <div class="form-group">
-          <label class="form-label">Tipo de ingreso <span class="required">*</span></label>
-          <div class="bubble-group">
-            <div class="bubble" onclick="setBubble(this, 'tipo_ingreso', 'pdv'); onTipoIngresoChange('pdv')">PDV</div>
-            <div class="bubble" onclick="setBubble(this, 'tipo_ingreso', 'centralizado'); onTipoIngresoChange('centralizado')">Centralizado</div>
-            <div class="bubble" onclick="setBubble(this, 'tipo_ingreso', 'almacen_propio'); onTipoIngresoChange('almacen_propio')">Almacén Propio</div>
+      <div class="wcard-body">
+
+        <div class="fgroup">
+          <label class="flabel">Tipo de ingreso <span class="req">*</span></label>
+          <div class="bgroup">
+            <div class="bubble" onclick="setBubble(this,'tipo_ingreso','pdv'); onTipoIngresoChange('pdv')">PDV</div>
+            <div class="bubble" onclick="setBubble(this,'tipo_ingreso','centralizado'); onTipoIngresoChange('centralizado')">Centralizado</div>
+            <div class="bubble" onclick="setBubble(this,'tipo_ingreso','almacen_propio'); onTipoIngresoChange('almacen_propio')">Almacén Propio</div>
           </div>
           <input type="hidden" name="tipo_ingreso" id="inputTipoIngreso">
         </div>
 
         {{-- Tipo venta móvil --}}
-        <div class="form-group" id="grupoTipoVentaMovil" style="display:none;">
-          <label class="form-label">Tipo de venta <span class="required">*</span></label>
-          <div class="bubble-group">
-            <div class="bubble" onclick="setBubble(this, 'tipo_venta_movil', 'alta'); togglePortaMovil('alta')">Alta nueva</div>
-            <div class="bubble" onclick="setBubble(this, 'tipo_venta_movil', 'porta'); togglePortaMovil('porta')">Portabilidad</div>
-            <div class="bubble" onclick="setBubble(this, 'tipo_venta_movil', 'renovacion'); togglePortaMovil('renovacion')">Renovación</div>
+        <div class="fgroup" id="grupoTipoVentaMovil" style="display:none;">
+          <label class="flabel">Tipo de venta <span class="req">*</span></label>
+          <div class="bgroup">
+            <div class="bubble" onclick="setBubble(this,'tipo_venta_movil','alta'); togglePortaMovil('alta')">Alta nueva</div>
+            <div class="bubble" onclick="setBubble(this,'tipo_venta_movil','porta'); togglePortaMovil('porta')">Portabilidad</div>
+            <div class="bubble" onclick="setBubble(this,'tipo_venta_movil','renovacion'); togglePortaMovil('renovacion')">Renovación</div>
           </div>
           <input type="hidden" name="tipo_venta_movil" id="inputTipoVentaMovil">
         </div>
 
         {{-- Tipo venta fija --}}
-        <div class="form-group" id="grupoTipoVentaFija" style="display:none;">
-          <label class="form-label">Tipo de venta <span class="required">*</span></label>
-          <div class="bubble-group">
-            <div class="bubble" onclick="setBubble(this, 'tipo_venta_fija', 'alta'); togglePortaFija(false)">Alta</div>
-            <div class="bubble" onclick="setBubble(this, 'tipo_venta_fija', 'porta'); togglePortaFija(true)">Portabilidad</div>
+        <div class="fgroup" id="grupoTipoVentaFija" style="display:none;">
+          <label class="flabel">Tipo de venta <span class="req">*</span></label>
+          <div class="bgroup">
+            <div class="bubble" onclick="setBubble(this,'tipo_venta_fija','alta'); togglePortaFija(false)">Alta</div>
+            <div class="bubble" onclick="setBubble(this,'tipo_venta_fija','porta'); togglePortaFija(true)">Portabilidad</div>
           </div>
           <input type="hidden" name="tipo_venta_fija" id="inputTipoVentaFija">
         </div>
 
-        {{-- B5: Campos extra para porta fija --}}
+        {{-- Porta fija extra --}}
         <div id="grupoPortaFija" style="display:none;">
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Operador cedente <span class="required">*</span></label>
-              <select name="operador_cedente_fija" class="form-input" style="background:rgba(255,255,255,0.05);">
+          <div class="frow">
+            <div class="fgroup">
+              <label class="flabel">Operador cedente <span class="req">*</span></label>
+              <select name="operador_cedente_fija" class="finput">
                 <option value="">— Seleccionar —</option>
                 <option value="movistar">Movistar</option>
                 <option value="entel">Entel</option>
@@ -541,175 +659,167 @@
                 <option value="otros">Otros</option>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Teléfono fijo a migrar <span class="required">*</span></label>
-              <input type="text" name="telefono_fijo_migrar" class="form-input" placeholder="01 XXXXXXX">
+            <div class="fgroup">
+              <label class="flabel">Teléfono fijo a migrar <span class="req">*</span></label>
+              <input type="text" name="telefono_fijo_migrar" class="finput" placeholder="01 XXXXXXX">
             </div>
           </div>
         </div>
+
       </div>
     </div>
 
     {{-- PASO 3: DATOS DEL CLIENTE --}}
-    <div class="card" id="paso3" style="display:none;">
-      <div class="card-header">
-        <div class="card-header-title">Paso 3 — Datos del cliente</div>
+    <div class="wcard" id="c3" style="display:none;">
+      <div class="wcard-head">
+        <div class="wcard-num">3</div>
+        <div class="wcard-title">Datos del cliente</div>
       </div>
-      <div class="card-body">
+      <div class="wcard-body">
 
-        <div class="alert-biometria" id="alertBiometria">
+        <div class="alert-bio" id="alertBiometria">
           ⚠️ <strong>Importante:</strong> El representante ingresado debe ser quien pasará la <strong>biometría</strong> al momento de la portabilidad o alta.
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">RUC</label>
-            <input type="text" class="form-input" value="{{ $lead->ruc }}" readonly>
+        <div class="frow" style="margin-bottom:16px;">
+          <div class="fgroup">
+            <label class="flabel">RUC</label>
+            <input type="text" class="finput" value="{{ $lead->ruc }}" readonly>
           </div>
-          <div class="form-group">
-            <label class="form-label">Razón Social</label>
-            <input type="text" class="form-input" value="{{ $lead->razon_social }}" readonly>
+          <div class="fgroup">
+            <label class="flabel">Razón Social</label>
+            <input type="text" class="finput" value="{{ $lead->razon_social }}" readonly>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">
-            Nombre del representante <span class="required">*</span>
+        <div class="fgroup">
+          <label class="flabel">
+            Nombre del representante <span class="req">*</span>
             <span class="hint" id="hintBiometria" style="display:none;">👆 Quien pasará la biometría</span>
           </label>
-          <input type="text" name="nombre_representante" class="form-input"
-                 value="{{ $lead->nombre_rl }}" placeholder="Nombre completo del representante">
+          <input type="text" name="nombre_representante" class="finput"
+                 value="{{ $lead->nombre_rl }}" placeholder="Nombre completo">
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Tipo de documento <span class="required">*</span></label>
-            <div class="bubble-group">
-              <div class="bubble" onclick="setBubble(this, 'tipo_documento', 'dni'); setDocLimit('dni')">DNI</div>
-              <div class="bubble" onclick="setBubble(this, 'tipo_documento', 'ce'); setDocLimit('ce')">CE</div>
+        <div class="frow">
+          <div class="fgroup">
+            <label class="flabel">Tipo de documento <span class="req">*</span></label>
+            <div class="bgroup">
+              <div class="bubble" onclick="setBubble(this,'tipo_documento','dni'); setDocLimit('dni')">DNI</div>
+              <div class="bubble" onclick="setBubble(this,'tipo_documento','ce'); setDocLimit('ce')">CE</div>
             </div>
             <input type="hidden" name="tipo_documento" id="inputTipoDoc">
           </div>
-          <div class="form-group">
-            <label class="form-label">N° de documento <span class="required">*</span></label>
-            <input type="text" name="nro_documento" id="inputNroDoc" class="form-input"
+          <div class="fgroup">
+            <label class="flabel">N° de documento <span class="req">*</span></label>
+            <input type="text" name="nro_documento" id="inputNroDoc" class="finput"
                    maxlength="8" placeholder="8 dígitos">
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">
-              Teléfono del representante / titular <span class="required">*</span>
-            </label>
-            <input type="text" name="telefono_representante" class="form-input"
+        <div class="frow">
+          <div class="fgroup">
+            <label class="flabel">Teléfono del representante <span class="req">*</span></label>
+            <input type="text" name="telefono_representante" class="finput"
                    value="{{ $lead->telf1 }}" placeholder="9XX XXX XXX">
           </div>
-          <div class="form-group" id="grupoTelfSot" style="display:none;">
-            <label class="form-label">Teléfono para SOT <span class="hint">(técnico instalación)</span></label>
-            <input type="text" name="telefono_sot" class="form-input" placeholder="9XX XXX XXX">
+          <div class="fgroup" id="grupoTelfSot" style="display:none;">
+            <label class="flabel">Teléfono para SOT <span class="hint">(técnico)</span></label>
+            <input type="text" name="telefono_sot" class="finput" placeholder="9XX XXX XXX">
           </div>
-          <div class="form-group" id="grupoTelfBiometria" style="display:none;">
-            <label class="form-label">Teléfono para motorizado de delivery</label>
-            <input type="text" name="telefono_referencia_movil" class="form-input" placeholder="9XX XXX XXX">
+          <div class="fgroup" id="grupoTelfBiometria" style="display:none;">
+            <label class="flabel">Teléfono motorizado de delivery</label>
+            <input type="text" name="telefono_referencia_movil" class="finput" placeholder="9XX XXX XXX">
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Correo electrónico <span class="required">*</span></label>
-            <input type="email" name="correo" class="form-input"
-                   value="{{ $lead->correo_rl }}" placeholder="correo@empresa.com">
-          </div>
-          <div class="form-group" style="display:none;">
-            {{-- N° SEC exclusivo para Mesa de Control --}}
-            <label class="form-label">N° de SEC</label>
-            <input type="text" name="nro_sec" class="form-input" placeholder="Número SEC" readonly>
-          </div>
+        <div class="fgroup">
+          <label class="flabel">Correo electrónico <span class="req">*</span></label>
+          <input type="email" name="correo" class="finput"
+                 value="{{ $lead->correo_rl }}" placeholder="correo@empresa.com">
         </div>
+
       </div>
     </div>
 
-    {{-- PASO 4A: CAMPOS FIJA --}}
-    <div class="card" id="pasoFija" style="display:none;">
-      <div class="card-header">
-        <div class="card-header-title">Paso 4 — Datos del servicio fijo</div>
+    {{-- PASO 4A: FIJA --}}
+    <div class="wcard" id="pasoFija" style="display:none;">
+      <div class="wcard-head">
+        <div class="wcard-num">4</div>
+        <div class="wcard-title">Datos del servicio fijo</div>
       </div>
-      <div class="card-body">
+      <div class="wcard-body">
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Coordenadas de cobertura <span class="hint">(factibilidad)</span></label>
-            <input type="text" name="coordenadas_cobertura" class="form-input" placeholder="-12.0464, -77.0428">
+        <div class="frow">
+          <div class="fgroup">
+            <label class="flabel">Coordenadas de cobertura <span class="hint">(factibilidad)</span></label>
+            <input type="text" name="coordenadas_cobertura" class="finput" placeholder="-12.0464, -77.0428">
           </div>
-          <div class="form-group">
-            <label class="form-label">Plano de cobertura <span class="hint">(factibilidad)</span></label>
-            <input type="text" name="plano_cobertura" class="form-input" placeholder="URL o referencia">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Dirección de instalación <span class="required">*</span></label>
-          <input type="text" name="direccion_instalacion" class="form-input" placeholder="Av. / Jr. / Calle...">
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Referencia de dirección</label>
-            <input type="text" name="referencia_direccion_instalacion" class="form-input" placeholder="Cerca a...">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Dirección de facturación</label>
-            <input type="text" name="direccion_facturacion_fija" class="form-input" placeholder="Si es diferente a instalación">
+          <div class="fgroup">
+            <label class="flabel">Plano de cobertura <span class="hint">(factibilidad)</span></label>
+            <input type="text" name="plano_cobertura" class="finput" placeholder="URL o referencia">
           </div>
         </div>
 
-        <div class="section-title">Tecnología y campaña</div>
+        <div class="fgroup">
+          <label class="flabel">Dirección de instalación <span class="req">*</span></label>
+          <input type="text" name="direccion_instalacion" class="finput" placeholder="Av. / Jr. / Calle...">
+        </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Tecnología <span class="required">*</span></label>
-            <div class="bubble-group">
-              <div class="bubble" onclick="setBubble(this, 'tecnologia', 'hfc')">HFC</div>
-              <div class="bubble" onclick="setBubble(this, 'tecnologia', 'ftth')">FTTH</div>
+        <div class="frow">
+          <div class="fgroup">
+            <label class="flabel">Referencia de dirección</label>
+            <input type="text" name="referencia_direccion_instalacion" class="finput" placeholder="Cerca a...">
+          </div>
+          <div class="fgroup">
+            <label class="flabel">Dirección de facturación</label>
+            <input type="text" name="direccion_facturacion_fija" class="finput" placeholder="Si difiere de instalación">
+          </div>
+        </div>
+
+        <div class="fsep">Tecnología y campaña</div>
+
+        <div class="frow">
+          <div class="fgroup">
+            <label class="flabel">Tecnología <span class="req">*</span></label>
+            <div class="bgroup">
+              <div class="bubble" onclick="setBubble(this,'tecnologia','hfc')">HFC</div>
+              <div class="bubble" onclick="setBubble(this,'tecnologia','ftth')">FTTH</div>
             </div>
             <input type="hidden" name="tecnologia" id="inputTecnologia">
           </div>
-          <div class="form-group">
-            <label class="form-label">Campaña <span class="required">*</span></label>
-            <div class="bubble-group">
-              <div class="bubble" onclick="setBubble(this, 'campana_fija', 'regular')">Regular</div>
-              <div class="bubble" onclick="setBubble(this, 'campana_fija', '1_sol')">1 Sol</div>
-              <div class="bubble" onclick="setBubble(this, 'campana_fija', 'empresas_medio')">Empresas Medio</div>
-              <div class="bubble" onclick="setBubble(this, 'campana_fija', 'empresas_basico')">Empresas Básico</div>
-              <div class="bubble" onclick="setBubble(this, 'campana_fija', 'empresas_grande')">Empresas Grande</div>
-              <div class="bubble" onclick="setBubble(this, 'campana_fija', 'relampago')">Relámpago</div>
+          <div class="fgroup">
+            <label class="flabel">Campaña <span class="req">*</span></label>
+            <div class="bgroup">
+              <div class="bubble" onclick="setBubble(this,'campana_fija','regular')">Regular</div>
+              <div class="bubble" onclick="setBubble(this,'campana_fija','1_sol')">1 Sol</div>
+              <div class="bubble" onclick="setBubble(this,'campana_fija','empresas_medio')">Empresas Medio</div>
+              <div class="bubble" onclick="setBubble(this,'campana_fija','empresas_basico')">Empresas Básico</div>
+              <div class="bubble" onclick="setBubble(this,'campana_fija','empresas_grande')">Empresas Grande</div>
+              <div class="bubble" onclick="setBubble(this,'campana_fija','relampago')">Relámpago</div>
             </div>
             <input type="hidden" name="campana_fija" id="inputCampanaFija">
           </div>
         </div>
 
-        <div class="section-title">Tipo de producto y planes</div>
+        <div class="fsep">Tipo de producto y planes</div>
 
-        <div class="form-group">
-          <label class="form-label">Tipo de producto <span class="required">*</span></label>
-          <div class="bubble-group">
-            <div class="bubble" onclick="setBubble(this, 'tipo_producto_fija', '1play'); renderCombosPlay('1play')">1Play</div>
-            <div class="bubble" onclick="setBubble(this, 'tipo_producto_fija', '2play'); renderCombosPlay('2play')">2Play</div>
-            <div class="bubble" onclick="setBubble(this, 'tipo_producto_fija', '3play'); renderCombosPlay('3play')">3Play</div>
+        <div class="fgroup">
+          <label class="flabel">Tipo de producto <span class="req">*</span></label>
+          <div class="bgroup">
+            <div class="bubble" onclick="setBubble(this,'tipo_producto_fija','1play'); renderCombosPlay('1play')">1Play</div>
+            <div class="bubble" onclick="setBubble(this,'tipo_producto_fija','2play'); renderCombosPlay('2play')">2Play</div>
+            <div class="bubble" onclick="setBubble(this,'tipo_producto_fija','3play'); renderCombosPlay('3play')">3Play</div>
           </div>
           <input type="hidden" name="tipo_producto_fija" id="inputTipoProducto">
-          <div style="font-size:11px;color:rgba(255,255,255,0.25);margin-top:6px;" id="hintPlay">
+          <div style="font-size:10px;color:var(--text-faint);margin-top:6px;" id="hintPlay">
             1Play: cualquier servicio · 2Play: internet + (telf o cable) · 3Play: internet + telf + cable
           </div>
         </div>
 
-        {{-- Combos dinámicos según play --}}
-        <div class="form-group" id="grupoCombosPlay" style="display:none;">
-          <label class="form-label">Planes <span class="required">*</span></label>
+        <div class="fgroup" id="grupoCombosPlay" style="display:none;">
+          <label class="flabel">Planes <span class="req">*</span></label>
           <div id="combosPlayContainer"></div>
-
-          {{-- Checkboxes hidden — se activan via JS según selección de combos --}}
           <input type="hidden" name="plan_telefonia"      id="hPlanTelefonia"    value="0">
           <input type="hidden" name="plan_cable_standar"  id="hPlanCableStandar" value="0">
           <input type="hidden" name="plan_cable_superior" id="hPlanCableSup"     value="0">
@@ -718,306 +828,288 @@
           <input type="hidden" name="plan_internet_1500"  id="hPlanInt1500"      value="0">
         </div>
 
-        <div class="section-title">Adicionales</div>
+        <div class="fsep">Adicionales</div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Cantidad de DECOs</label>
-            <input type="number" name="cantidad_decos" class="form-input" min="0" value="0" placeholder="0">
+        <div class="frow">
+          <div class="fgroup">
+            <label class="flabel">Cantidad de DECOs</label>
+            <input type="number" name="cantidad_decos" class="finput" min="0" value="0">
           </div>
-          <div class="form-group">
-            <label class="form-label">Cantidad de repetidores</label>
-            <input type="number" name="cantidad_repetidores" class="form-input" min="0" value="0" placeholder="0">
-          </div>
-        </div>
-
-        <div class="section-title">Otros datos</div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Bono</label>
-            <input type="text" name="bono_fija" class="form-input" placeholder="Descripción del bono">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Descuento</label>
-            <input type="text" name="descuento_fija" class="form-input" placeholder="Descripción del descuento">
+          <div class="fgroup">
+            <label class="flabel">Cantidad de repetidores</label>
+            <input type="number" name="cantidad_repetidores" class="finput" min="0" value="0">
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Full Claro</label>
-          <div class="bubble-group">
-            <div class="bubble" onclick="setBubble(this, 'full_claro', 'aplica'); toggleFullClaro(true)">Aplica</div>
-            <div class="bubble" onclick="setBubble(this, 'full_claro', 'no_aplica'); toggleFullClaro(false)">No aplica</div>
+        <div class="fsep">Otros datos</div>
+
+        <div class="frow">
+          <div class="fgroup">
+            <label class="flabel">Bono</label>
+            <input type="text" name="bono_fija" class="finput" placeholder="Descripción del bono">
+          </div>
+          <div class="fgroup">
+            <label class="flabel">Descuento</label>
+            <input type="text" name="descuento_fija" class="finput" placeholder="Descripción del descuento">
+          </div>
+        </div>
+
+        <div class="fgroup">
+          <label class="flabel">Full Claro</label>
+          <div class="bgroup">
+            <div class="bubble" onclick="setBubble(this,'full_claro','aplica'); toggleFullClaro(true)">Aplica</div>
+            <div class="bubble" onclick="setBubble(this,'full_claro','no_aplica'); toggleFullClaro(false)">No aplica</div>
           </div>
           <input type="hidden" name="full_claro" id="inputFullClaro">
         </div>
 
-        <div class="form-group field-fullclaro" id="grupoFullClaro">
-          <label class="form-label">N° móvil Full Claro <span class="hint">(opcional)</span></label>
-          <input type="text" name="nro_movil_fullclaro" class="form-input" placeholder="9XX XXX XXX">
+        <div class="fgroup field-fullclaro" id="grupoFullClaro">
+          <label class="flabel">N° móvil Full Claro <span class="hint">(opcional)</span></label>
+          <input type="text" name="nro_movil_fullclaro" class="finput" placeholder="9XX XXX XXX">
         </div>
 
       </div>
     </div>
 
-    {{-- PASO 4B: CAMPOS MÓVIL --}}
-    <div class="card" id="pasoMovil" style="display:none;">
-      <div class="card-header">
-        <div class="card-header-title">Paso 4 — Datos del servicio móvil</div>
+    {{-- PASO 4B: MÓVIL --}}
+    <div class="wcard" id="pasoMovil" style="display:none;">
+      <div class="wcard-head">
+        <div class="wcard-num">4</div>
+        <div class="wcard-title">Datos del servicio móvil</div>
       </div>
-      <div class="card-body">
+      <div class="wcard-body">
 
-        <div class="form-group">
-          <label class="form-label">Tipo de entrega <span class="required">*</span></label>
-          <div class="bubble-group">
-            <div class="bubble" onclick="setBubble(this, 'tipo_entrega', 'delivery'); onTipoEntregaChange('delivery')">Delivery</div>
-            <div class="bubble" onclick="setBubble(this, 'tipo_entrega', 'recojo_cac'); onTipoEntregaChange('recojo_cac')">Recojo en CAC</div>
+        <div class="fgroup">
+          <label class="flabel">Tipo de entrega <span class="req">*</span></label>
+          <div class="bgroup">
+            <div class="bubble" onclick="setBubble(this,'tipo_entrega','delivery'); onTipoEntregaChange('delivery')">Delivery</div>
+            <div class="bubble" onclick="setBubble(this,'tipo_entrega','recojo_cac'); onTipoEntregaChange('recojo_cac')">Recojo en CAC</div>
           </div>
           <input type="hidden" name="tipo_entrega" id="inputTipoEntrega">
-          <input type="hidden" name="cac_id" id="inputCacId">
+          <input type="hidden" name="cac_id"        id="inputCacId">
         </div>
 
-        {{-- Bloque DELIVERY --}}
+        {{-- DELIVERY --}}
         <div id="grupoDelivery">
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">
-                Coordenadas de delivery
-                <span class="hint">pega ambas y se separan solas</span>
-              </label>
+          <div class="frow">
+            <div class="fgroup">
+              <label class="flabel">Coordenadas de delivery <span class="hint">pega ambas y se separan</span></label>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                <input type="text" id="inputGeoX" class="form-input" placeholder="Lat: -12.0464"
+                <input type="text" id="inputGeoX" class="finput" placeholder="Lat: -12.0464"
                        oninput="syncGeodirCoords()" onpaste="setTimeout(splitGeodirPaste,10)">
-                <input type="text" id="inputGeoY" class="form-input" placeholder="Lng: -77.0428"
+                <input type="text" id="inputGeoY" class="finput" placeholder="Lng: -77.0428"
                        oninput="syncGeodirCoords()">
               </div>
               <input type="hidden" name="coordenadas_geodir" id="inputCoordsGeodirFinal">
             </div>
-            <div class="form-group">
-              <label class="form-label">Plano de entrega de delivery</label>
-              <input type="text" name="plano_geodir" class="form-input" placeholder="URL o referencia">
+            <div class="fgroup">
+              <label class="flabel">Plano de entrega</label>
+              <input type="text" name="plano_geodir" class="finput" placeholder="URL o referencia">
             </div>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">Dirección de entrega <span class="required">*</span></label>
-            <input type="text" name="direccion_entrega" class="form-input" placeholder="Av. / Jr. / Calle...">
+          <div class="fgroup">
+            <label class="flabel">Dirección de entrega <span class="req">*</span></label>
+            <input type="text" name="direccion_entrega" class="finput" placeholder="Av. / Jr. / Calle...">
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Referencias del punto de entrega</label>
-              <input type="text" name="referencias_entrega" class="form-input" placeholder="Cerca a...">
+          <div class="frow">
+            <div class="fgroup">
+              <label class="flabel">Referencia del punto</label>
+              <input type="text" name="referencias_entrega" class="finput" placeholder="Cerca a...">
             </div>
-            <div class="form-group">
-              <label class="form-label">Dirección de facturación</label>
-              <input type="text" name="direccion_facturacion_movil" class="form-input" placeholder="Si es diferente">
+            <div class="fgroup">
+              <label class="flabel">Dirección de facturación</label>
+              <input type="text" name="direccion_facturacion_movil" class="finput" placeholder="Si difiere">
             </div>
           </div>
         </div>
 
-        {{-- Bloque RECOJO EN CAC --}}
+        {{-- RECOJO EN CAC --}}
         <div id="grupoCac" style="display:none;">
-          <div class="form-group" style="position:relative;">
-            <label class="form-label">Buscar CAC <span class="required">*</span></label>
-            <input type="text" id="inputCacBusqueda" class="form-input"
-                   placeholder="Escribe nombre o dirección del CAC..."
+          <div class="fgroup" style="position:relative;">
+            <label class="flabel">Buscar CAC <span class="req">*</span></label>
+            <input type="text" id="inputCacBusqueda" class="finput"
+                   placeholder="Nombre o dirección del CAC..."
                    autocomplete="off" oninput="buscarCac(this.value)">
-            <div id="cacDropdown" style="
-              display:none; position:absolute; z-index:100;
-              background:#1e1e2a; border:1px solid rgba(255,255,255,0.1);
-              border-radius:8px; margin-top:4px; max-height:200px;
-              overflow-y:auto; min-width:300px;
-            "></div>
+            <div id="cacDropdown" class="cac-drop" style="display:none;"></div>
           </div>
           <div id="grupoCacSeleccionado" style="display:none;">
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">CAC seleccionado</label>
-                <input type="text" id="inputCacNombre" class="form-input" readonly
-                       style="background:rgba(29,158,117,0.08);border-color:rgba(29,158,117,0.25);color:#5dcaa5;">
+            <div class="frow">
+              <div class="fgroup">
+                <label class="flabel">CAC seleccionado</label>
+                <input type="text" id="inputCacNombre" class="finput" readonly
+                       style="border-color:rgba(93,202,165,0.3);color:var(--green);">
               </div>
-              <div class="form-group">
-                <label class="form-label">Dirección del CAC</label>
-                <input type="text" id="inputCacDireccion" class="form-input" readonly
-                       style="background:rgba(255,255,255,0.02);color:rgba(255,255,255,0.5);">
+              <div class="fgroup">
+                <label class="flabel">Dirección del CAC</label>
+                <input type="text" id="inputCacDireccion" class="finput" readonly>
               </div>
             </div>
           </div>
-          <div class="form-group" style="margin-top:4px;">
-            <label class="form-label">Dirección de facturación</label>
-            <input type="text" name="direccion_facturacion_movil" class="form-input" placeholder="Si es diferente">
+          <div class="fgroup">
+            <label class="flabel">Dirección de facturación</label>
+            <input type="text" name="direccion_facturacion_movil" class="finput" placeholder="Si difiere">
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Campaña <span class="required">*</span></label>
-          <div class="bubble-group">
-            <div class="bubble" onclick="setBubble(this, 'campana_movil', 'claro_negocios')">Claro Negocios</div>
-            <div class="bubble" onclick="setBubble(this, 'campana_movil', 'claro_emprendedor')">Claro Emprendedor</div>
+        <div class="fgroup">
+          <label class="flabel">Campaña <span class="req">*</span></label>
+          <div class="bgroup">
+            <div class="bubble" onclick="setBubble(this,'campana_movil','claro_negocios')">Claro Negocios</div>
+            <div class="bubble" onclick="setBubble(this,'campana_movil','claro_emprendedor')">Claro Emprendedor</div>
           </div>
           <input type="hidden" name="campana_movil" id="inputCampanaMovil">
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Fecha de despacho <span class="required">*</span></label>
-            <input type="date" name="fecha_despacho" class="form-input" id="inputFechaDespacho">
+        <div class="frow">
+          <div class="fgroup">
+            <label class="flabel">Fecha de despacho <span class="req">*</span></label>
+            <input type="date" name="fecha_despacho" class="finput" id="inputFechaDespacho">
           </div>
-          <div class="form-group">
-            <label class="form-label">Rango horario <span class="required">*</span></label>
-            <div class="bubble-group">
-              <div class="bubble" id="bubbleSla3h" onclick="setBubble(this, 'rango_horario', 'sla_3h')">SLA 3H</div>
-              <div class="bubble" onclick="setBubble(this, 'rango_horario', '9-11')">9–11am</div>
-              <div class="bubble" onclick="setBubble(this, 'rango_horario', '11-1')">11am–1pm</div>
-              <div class="bubble" onclick="setBubble(this, 'rango_horario', '2-4')">2–4pm</div>
-              <div class="bubble" onclick="setBubble(this, 'rango_horario', '4-6')">4–6pm</div>
+          <div class="fgroup">
+            <label class="flabel">Rango horario <span class="req">*</span></label>
+            <div class="bgroup">
+              <div class="bubble" id="bubbleSla3h" onclick="setBubble(this,'rango_horario','sla_3h')">SLA 3H</div>
+              <div class="bubble" onclick="setBubble(this,'rango_horario','9-11')">9–11am</div>
+              <div class="bubble" onclick="setBubble(this,'rango_horario','11-1')">11am–1pm</div>
+              <div class="bubble" onclick="setBubble(this,'rango_horario','2-4')">2–4pm</div>
+              <div class="bubble" onclick="setBubble(this,'rango_horario','4-6')">4–6pm</div>
             </div>
             <input type="hidden" name="rango_horario" id="inputRangoHorario">
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Comentario de despacho <span class="hint">casos solo SEC u observaciones</span></label>
-          <input type="text" name="comentario_despacho" class="form-input" placeholder="Ej: Solo SEC, coordinar con...">
+        <div class="fgroup">
+          <label class="flabel">Comentario de despacho <span class="hint">casos solo SEC u observaciones</span></label>
+          <input type="text" name="comentario_despacho" class="finput" placeholder="Ej: Solo SEC, coordinar con...">
         </div>
 
-        <div class="section-title">Líneas solicitadas</div>
+        <div class="fsep">Líneas solicitadas</div>
 
-        <table class="lineas-table" id="tablLineas">
-          <thead>
-            <tr>
-              <th>N° a portar</th>
-              <th>Plan</th>
-              <th>Operador cedente</th>
-              <th>Equipo / SIM</th>
-              <th>Descuento</th>
-              <th>N° WF</th>
-              <th>Large</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="lineasBody">
-            {{-- Se agregan dinámicamente --}}
-          </tbody>
-        </table>
-
-        <button type="button" class="btn-add-linea" onclick="addLinea()">
-          + Agregar línea
-        </button>
+        <div class="lineas-wrap">
+          <table class="lineas-table" id="tablLineas">
+            <thead>
+              <tr>
+                <th class="col-porta">N° a portar</th>
+                <th>Plan</th>
+                <th class="col-porta">Op. cedente</th>
+                <th>Equipo / SIM</th>
+                <th>Descuento</th>
+                <th>N° WF</th>
+                <th class="col-large">Large</th>
+                <th style="width:32px;"></th>
+              </tr>
+            </thead>
+            <tbody id="lineasBody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-add-linea" onclick="addLinea()">+ Agregar línea</button>
 
       </div>
     </div>
 
     {{-- PASO 5: DOCUMENTOS --}}
-    <div class="card" id="paso5" style="display:none;">
-      <div class="card-header">
-        <div class="card-header-title">Paso 5 — Documentos adjuntos</div>
-        <span class="card-header-badge" style="background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.35);">Opcional</span>
+    <div class="wcard" id="c5" style="display:none;">
+      <div class="wcard-head">
+        <div class="wcard-num">5</div>
+        <div class="wcard-title">Documentos adjuntos</div>
+        <span class="wcard-badge">Opcional</span>
       </div>
-      <div class="card-body">
+      <div class="wcard-body">
         <div class="doc-drop" onclick="document.getElementById('inputDocs').click()">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" style="margin:0 auto;">
-            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-          <p>Haz clic para adjuntar DNI, PDFs, Excel, etc.</p>
+          <div class="doc-drop-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <p>Haz clic para adjuntar archivos</p>
+          <span>PDF, Excel, imágenes, Word…</span>
           <input type="file" id="inputDocs" name="documentos[]" multiple
                  accept=".pdf,.xlsx,.xls,.csv,.jpg,.jpeg,.png,.doc,.docx"
+                 onchange="previewDocs(this); updateProgress()"
                  style="display:none" onchange="previewDocs(this)">
+                 
         </div>
         <div class="doc-list" id="docList"></div>
       </div>
     </div>
 
-  </div>
+  </div>{{-- /mainCol --}}
 
   {{-- ── SIDEBAR ── --}}
-  <div>
-    <div class="sidebar-card">
-      <div class="sidebar-title">Resumen del lead</div>
-      <div class="sidebar-row">
-        <span class="sidebar-label">RUC</span>
-        <span class="sidebar-value">{{ $lead->ruc }}</span>
+  <div class="side-panel">
+
+    {{-- Progreso --}}
+    <div class="scard">
+      <div class="scard-title">Progreso del formulario</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progressFill"></div>
       </div>
-      <div class="sidebar-row">
-        <span class="sidebar-label">Empresa</span>
-        <span class="sidebar-value">{{ $lead->razon_social }}</span>
-      </div>
-      <div class="sidebar-row">
-        <span class="sidebar-label">Representante</span>
-        <span class="sidebar-value">{{ $lead->nombre_rl ?? '—' }}</span>
-      </div>
-      <div class="sidebar-row">
-        <span class="sidebar-label">Teléfono</span>
-        <span class="sidebar-value">{{ $lead->telf1 ?? '—' }}</span>
-      </div>
-      <div class="sidebar-row">
-        <span class="sidebar-label">Segmento</span>
-        <span class="sidebar-value">{{ ucfirst($lead->segmento ?? '—') }}</span>
-      </div>
-      <div class="sidebar-row">
-        <span class="sidebar-label">Departamento</span>
-        <span class="sidebar-value">{{ $lead->departamento ?? '—' }}</span>
-      </div>
+      <div style="font-size:11px;color:var(--text-faint);text-align:right;" id="progressLabel">0 de 5 pasos</div>
     </div>
 
-    <div class="sidebar-card" id="sidebarVentas" style="display:none;">
-      <div class="sidebar-title">Ventas anteriores</div>
+    {{-- Lead info --}}
+    <div class="scard">
+      <div class="scard-title">Datos del lead</div>
+      <div class="srow"><span class="slabel">RUC</span><span class="sval">{{ $lead->ruc }}</span></div>
+      <div class="srow"><span class="slabel">Empresa</span><span class="sval">{{ $lead->razon_social }}</span></div>
+      <div class="srow"><span class="slabel">Representante</span><span class="sval">{{ $lead->nombre_rl ?? '—' }}</span></div>
+      <div class="srow"><span class="slabel">Teléfono</span><span class="sval">{{ $lead->telf1 ?? '—' }}</span></div>
+      <div class="srow"><span class="slabel">Segmento</span><span class="sval">{{ ucfirst($lead->segmento ?? '—') }}</span></div>
+      <div class="srow"><span class="slabel">Depto.</span><span class="sval">{{ $lead->departamento ?? '—' }}</span></div>
+    </div>
+
+    {{-- Ventas anteriores --}}
+    <div class="scard" id="sidebarVentas" style="display:none;">
+      <div class="scard-title">Ventas anteriores</div>
       @forelse($lead->ventas as $v)
-        <div class="sidebar-row">
-          <span class="sidebar-label">{{ ucfirst($v->tipo) }} — {{ $v->created_at->format('d/m/Y') }}</span>
-          <span class="sidebar-value" style="color:
-            @if($v->estado === 'completada') #5dcaa5
-            @elseif($v->estado === 'rechazada') #ff9090
-            @else #fac775
+        <div class="srow">
+          <span class="slabel">{{ ucfirst($v->tipo) }} — {{ $v->created_at->format('d/m/Y') }}</span>
+          <span class="sval" style="color:
+            @if($v->estado === 'completada') var(--green)
+            @elseif($v->estado === 'rechazada') var(--red)
+            @else var(--orange)
             @endif
           ">{{ ucfirst($v->estado) }}</span>
         </div>
       @empty
-        <div style="font-size:12px;color:rgba(255,255,255,0.25);">Sin ventas anteriores</div>
+        <div style="font-size:12px;color:var(--text-faint);">Sin ventas anteriores</div>
       @endforelse
     </div>
 
-    <div class="sidebar-card">
-      {{-- Errores de validación del servidor --}}
-      @if($errors->any())
-        <div id="serverErrors" style="
-          background: rgba(255,80,80,0.1);
-          border: 1px solid rgba(255,80,80,0.3);
-          border-radius: 8px;
-          padding: 12px 14px;
-          margin-bottom: 12px;
-        ">
-          <div style="font-size:12px;font-weight:700;color:#ff9090;margin-bottom:6px;">⚠ Corrige estos campos:</div>
-          <ul style="margin:0;padding-left:16px;">
-            @foreach($errors->all() as $error)
-              <li style="font-size:11px;color:#ff9090;margin-bottom:3px;">{{ $error }}</li>
-            @endforeach
-          </ul>
-        </div>
-      @endif
+    {{-- Errores servidor --}}
+    @if($errors->any())
+    <div class="err-box" id="serverErrors">
+      <div class="err-box-title">⚠ Corrige estos campos:</div>
+      <ul>
+        @foreach($errors->all() as $error)
+          <li>{{ $error }}</li>
+        @endforeach
+      </ul>
+    </div>
+    @endif
 
+    {{-- Submit --}}
+    <div class="scard">
       <button type="submit" class="btn-submit" id="btnSubmit">
         Enviar a Mesa de Control
       </button>
-      <div id="submitHint" style="font-size:11px;color:rgba(255,255,255,0.25);text-align:center;margin-top:8px;">
-        Completa todos los campos requeridos
-      </div>
+      <div class="submit-hint" id="submitHint">Completa todos los campos requeridos</div>
     </div>
+
   </div>
 
 </div>
 </form>
 
 <script>
-// ── ESTADO ────────────────────────────────
+// ── ESTADO ─────────────────────────────────────────
 let tipoActual = null;
-const hiddenInputs = {};
 
-// ── TIPO DE SERVICIO ─────────────────────
+// ── TIPO DE SERVICIO ────────────────────────────────
 function setTipo(tipo) {
   tipoActual = tipo;
   document.getElementById('inputTipo').value = tipo;
@@ -1026,9 +1118,10 @@ function setTipo(tipo) {
   document.getElementById('tipoFija').classList.toggle('active',  tipo === 'fija');
 
   // Mostrar pasos
-  document.getElementById('paso2').style.display   = 'block';
-  document.getElementById('paso3').style.display   = 'block';
-  document.getElementById('paso5').style.display   = 'block';
+  ['c2','c3','c5'].forEach(id => {
+    const el = document.getElementById(id);
+    el.style.display = 'block';
+  });
   document.getElementById('sidebarVentas').style.display = 'block';
 
   document.getElementById('pasoFija').style.display  = tipo === 'fija'  ? 'block' : 'none';
@@ -1037,132 +1130,106 @@ function setTipo(tipo) {
   document.getElementById('grupoTipoVentaMovil').style.display = tipo === 'movil' ? 'block' : 'none';
   document.getElementById('grupoTipoVentaFija').style.display  = tipo === 'fija'  ? 'block' : 'none';
 
-  // B4: Fija solo admite PDV — ocultar Centralizado y Almacén Propio
+  // Ocultar opciones que no aplican a fija
   document.querySelector('.bubble[onclick*="centralizado"]').style.display  = tipo === 'fija' ? 'none' : '';
   document.querySelector('.bubble[onclick*="almacen_propio"]').style.display = tipo === 'fija' ? 'none' : '';
 
-  // Teléfonos según tipo
+  // Teléfonos condicionales
   document.getElementById('grupoTelfSot').style.display       = tipo === 'fija'  ? 'block' : 'none';
   document.getElementById('grupoTelfBiometria').style.display = tipo === 'movil' ? 'block' : 'none';
 
-  // Alerta biometría
+  // Biometría
   document.getElementById('alertBiometria').style.display = tipo === 'movil' ? 'block' : 'none';
   document.getElementById('hintBiometria').style.display  = tipo === 'movil' ? 'inline' : 'none';
 
-  // Agregar primera línea si móvil
-  if (tipo === 'movil' && document.getElementById('lineasBody').children.length === 0) {
-    addLinea();
-  }
-
-  // ── DEFAULTS POR TIPO ─────────────────────
+  // Defaults por tipo
   if (tipo === 'fija') {
-    // A4: PDV + ALTA por default en fija
-    const pdvBubbleFija = document.querySelector('.bubble[onclick*="tipo_ingreso"][onclick*="pdv"]');
-    if (pdvBubbleFija) setBubble(pdvBubbleFija, 'tipo_ingreso', 'pdv');
-    const altaBubbleFija = document.querySelector('#grupoTipoVentaFija .bubble[onclick*="alta"]');
-    if (altaBubbleFija) { setBubble(altaBubbleFija, 'tipo_venta_fija', 'alta'); togglePortaFija(false); }
-
-    // A6: Tecnología FTTH + Campaña 1 Sol por default
+    const pdv = document.querySelector('.bubble[onclick*="tipo_ingreso"][onclick*="pdv"]');
+    if (pdv) setBubble(pdv, 'tipo_ingreso', 'pdv');
+    const alta = document.querySelector('#grupoTipoVentaFija .bubble[onclick*="alta"]');
+    if (alta) { setBubble(alta, 'tipo_venta_fija', 'alta'); togglePortaFija(false); }
     setTimeout(() => {
-      const ftthBubble = document.querySelector('.bubble[onclick*="ftth"]');
-      if (ftthBubble && !ftthBubble.classList.contains('active')) setBubble(ftthBubble, 'tecnologia', 'ftth');
-      const solBubble = document.querySelector('.bubble[onclick*="1_sol"]');
-      if (solBubble && !solBubble.classList.contains('active')) setBubble(solBubble, 'campana_fija', '1_sol');
+      const ftth = document.querySelector('.bubble[onclick*="ftth"]');
+      if (ftth && !ftth.classList.contains('active')) setBubble(ftth, 'tecnologia', 'ftth');
+      const sol = document.querySelector('.bubble[onclick*="1_sol"]');
+      if (sol && !sol.classList.contains('active')) setBubble(sol, 'campana_fija', '1_sol');
     }, 50);
   }
 
   if (tipo === 'movil') {
-    // A5: PDV + PORTA por default en móvil
-    const pdvBubbleMovil = document.querySelector('.bubble[onclick*="tipo_ingreso"][onclick*="pdv"]');
-    if (pdvBubbleMovil) setBubble(pdvBubbleMovil, 'tipo_ingreso', 'pdv');
+    const pdv = document.querySelector('.bubble[onclick*="tipo_ingreso"][onclick*="pdv"]');
+    if (pdv) setBubble(pdv, 'tipo_ingreso', 'pdv');
     onTipoIngresoChange('pdv');
-    const portaBubble = document.querySelector('#grupoTipoVentaMovil .bubble[onclick*="porta"]');
-    if (portaBubble) { setBubble(portaBubble, 'tipo_venta_movil', 'porta'); togglePortaMovil('porta'); }
-
-    // A3: Fecha despacho = hoy + SLA3H activo por default
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('inputFechaDespacho').value = hoy;
-    const sla3h = document.getElementById('bubbleSla3h');
-    if (sla3h && !sla3h.classList.contains('active')) setBubble(sla3h, 'rango_horario', 'sla_3h');
+    const sla = document.getElementById('bubbleSla3h');
+    if (sla && !sla.classList.contains('active')) setBubble(sla, 'rango_horario', 'sla_3h');
+    // Aplicar porta default ANTES de agregar la primera línea
+    setTimeout(() => {
+      const porta = document.querySelector('#grupoTipoVentaMovil .bubble[onclick*="porta"]');
+      if (porta) { setBubble(porta, 'tipo_venta_movil', 'porta'); togglePortaMovil('porta'); }
+      if (document.getElementById('lineasBody').children.length === 0) addLinea();
+    }, 50);
   }
 
+  updateProgress();
   checkSubmit();
+
+  // Scroll suave al paso 2
+  setTimeout(() => scrollToCard('c2'), 100);
 }
 
-// ── BUBBLES ───────────────────────────────
+// ── BUBBLES ─────────────────────────────────────────
 function setBubble(el, name, value) {
-  // Desactivar hermanos del mismo grupo
-  el.closest('.bubble-group').querySelectorAll('.bubble').forEach(b => {
-    b.classList.remove('active', 'active-green', 'active-orange');
-  });
+  el.closest('.bgroup').querySelectorAll('.bubble').forEach(b =>
+    b.classList.remove('active','active-green','active-orange')
+  );
   el.classList.add('active');
-
-  // Actualizar hidden input
-  let input = document.querySelector(`input[name="${name}"]`);
+  const input = document.querySelector(`input[name="${name}"]`);
   if (input) input.value = value;
-
+  updateProgress();
   checkSubmit();
 }
 
-// ── TIPO DOCUMENTO ────────────────────────
+// ── DOCUMENTO ───────────────────────────────────────
 function setDocLimit(tipo) {
   const input = document.getElementById('inputNroDoc');
-  if (tipo === 'dni') {
-    input.maxLength = 8;
-    input.placeholder = '8 dígitos';
-  } else {
-    input.maxLength = 9;
-    input.placeholder = '00 + 7 dígitos';
-  }
+  input.maxLength  = tipo === 'dni' ? 8 : 9;
+  input.placeholder = tipo === 'dni' ? '8 dígitos' : '00 + 7 dígitos';
 }
 
-// ── COORDENADAS GEODIR (split X/Y) ──────────
+// ── COORDS GEODIR ────────────────────────────────────
 function splitGeodirPaste() {
   const xInput = document.getElementById('inputGeoX');
   const yInput = document.getElementById('inputGeoY');
   const raw = xInput.value.trim();
-
-  // Detectar si pegaron "lat, lng" juntos en el campo X
   const match = raw.match(/^(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)$/);
-  if (match) {
-    xInput.value = match[1];
-    yInput.value = match[2];
-  }
+  if (match) { xInput.value = match[1]; yInput.value = match[2]; }
   syncGeodirCoords();
 }
-
 function syncGeodirCoords() {
   const x = document.getElementById('inputGeoX').value.trim();
   const y = document.getElementById('inputGeoY').value.trim();
   document.getElementById('inputCoordsGeodirFinal').value = (x && y) ? `${x}, ${y}` : (x || y);
 }
 
-// ── PORTA MÓVIL ───────────────────────────
+// ── PORTA MÓVIL ──────────────────────────────────────
 function togglePortaMovil(tipo) {
-  // En porta: mostrar columna operador cedente y nro a portar
   const esPorta = tipo === 'porta';
-  document.querySelectorAll('.col-porta').forEach(el => {
-    el.style.display = esPorta ? '' : 'none';
-  });
-  // En alta: mostrar large asociada
-  const esAlta = tipo === 'alta';
-  document.querySelectorAll('.col-large').forEach(el => {
-    el.style.display = esAlta ? '' : 'none';
-  });
-  // Actualizar filas existentes
+  const esAlta  = tipo === 'alta';
+  document.querySelectorAll('.col-porta').forEach(el => el.style.display = esPorta ? '' : 'none');
+  document.querySelectorAll('.col-large').forEach(el => el.style.display = esAlta  ? '' : 'none');
   document.querySelectorAll('#lineasBody tr').forEach(tr => {
     tr.querySelector('.td-porta').style.display = esPorta ? '' : 'none';
-    tr.querySelector('.td-large').style.display = esAlta ? '' : 'none';
+    tr.querySelector('.td-large').style.display = esAlta  ? '' : 'none';
   });
 }
 
-// ── TIPO ENTREGA (delivery vs recojo CAC) ────
+// ── TIPO ENTREGA ─────────────────────────────────────
 function onTipoEntregaChange(valor) {
   const esCAC = valor === 'recojo_cac';
   document.getElementById('grupoDelivery').style.display = esCAC ? 'none' : 'block';
   document.getElementById('grupoCac').style.display      = esCAC ? 'block' : 'none';
-
-  // Si cambia a delivery, limpiar selección CAC
   if (!esCAC) {
     document.getElementById('inputCacBusqueda').value = '';
     document.getElementById('inputCacId').value = '';
@@ -1171,90 +1238,69 @@ function onTipoEntregaChange(valor) {
   }
 }
 
-// ── BÚSQUEDA CAC ──────────────────────────
+// ── CAC ──────────────────────────────────────────────
 let cacTimer = null;
-
 function buscarCac(q) {
   clearTimeout(cacTimer);
   const dropdown = document.getElementById('cacDropdown');
-
   if (q.length < 2) { dropdown.style.display = 'none'; return; }
-
   cacTimer = setTimeout(async () => {
     try {
       const res  = await fetch(`/admin/cacs/search?q=${encodeURIComponent(q)}`);
       const data = await res.json();
       dropdown.innerHTML = '';
-
       if (!data.length) {
-        dropdown.innerHTML = '<div class="cac-option"><span class="cac-option-nombre" style="color:rgba(255,255,255,0.3);">Sin resultados</span></div>';
+        dropdown.innerHTML = '<div class="cac-opt"><span class="cac-opt-name" style="color:var(--text-faint);">Sin resultados</span></div>';
       } else {
         data.forEach(cac => {
           const div = document.createElement('div');
-          div.className = 'cac-option';
-          div.innerHTML = `<div class="cac-option-nombre">${cac.nombre}</div><div class="cac-option-dir">${cac.direccion}</div>`;
+          div.className = 'cac-opt';
+          div.innerHTML = `<div class="cac-opt-name">${cac.nombre}</div><div class="cac-opt-dir">${cac.direccion}</div>`;
           div.onclick = () => seleccionarCac(cac);
           dropdown.appendChild(div);
         });
       }
       dropdown.style.display = 'block';
-    } catch(e) {
-      console.error('Error buscando CAC:', e);
-    }
+    } catch(e) { console.error(e); }
   }, 300);
 }
-
 function seleccionarCac(cac) {
-  document.getElementById('inputCacId').value       = cac.id;
-  document.getElementById('inputCacBusqueda').value = cac.nombre;
-  document.getElementById('inputCacNombre').value   = cac.nombre;
+  document.getElementById('inputCacId').value        = cac.id;
+  document.getElementById('inputCacBusqueda').value  = cac.nombre;
+  document.getElementById('inputCacNombre').value    = cac.nombre;
   document.getElementById('inputCacDireccion').value = cac.direccion;
   document.getElementById('grupoCacSeleccionado').style.display = 'block';
   document.getElementById('cacDropdown').style.display = 'none';
 }
-
-// Cerrar dropdown al hacer click fuera
 document.addEventListener('click', e => {
-  if (!e.target.closest('#inputCacBusqueda') && !e.target.closest('#cacDropdown')) {
+  if (!e.target.closest('#inputCacBusqueda') && !e.target.closest('#cacDropdown'))
     document.getElementById('cacDropdown').style.display = 'none';
-  }
 });
 
-// ── PORTA FIJA ────────────────────────────
+// ── PORTA FIJA ───────────────────────────────────────
 function togglePortaFija(esPorta) {
   document.getElementById('grupoPortaFija').style.display = esPorta ? 'block' : 'none';
 }
 
-// ── FULL CLARO ────────────────────────────
+// ── FULL CLARO ───────────────────────────────────────
 function toggleFullClaro(aplica) {
   document.getElementById('grupoFullClaro').style.display = aplica ? 'block' : 'none';
 }
 
-// ── PLANES FIJA ───────────────────────────
-function togglePlan(el, name) {
-  el.classList.toggle('active');
-  const cb = el.querySelector('input[type="checkbox"]');
-  cb.checked = el.classList.contains('active');
-  checkSubmit();
-}
-
-// ── COMBOS PLANES FIJA ───────────────────────
+// ── PLANES FIJA ──────────────────────────────────────
 const PLANES = {
   internet:  [
     { label: 'Internet 200MB',  field: 'hPlanInt200'  },
     { label: 'Internet 400MB',  field: 'hPlanInt400'  },
     { label: 'Internet 1500MB', field: 'hPlanInt1500' },
   ],
-  telefonia: [
-    { label: 'Telefonía 5000',  field: 'hPlanTelefonia' },
-  ],
-  cable: [
+  telefonia: [{ label: 'Telefonía 5000', field: 'hPlanTelefonia' }],
+  cable:     [
     { label: 'Cable TV Estándar', field: 'hPlanCableStandar' },
-    { label: 'Cable TV Superior', field: 'hPlanCableSup'     },
+    { label: 'Cable TV Superior', field: 'hPlanCableSup' },
   ],
 };
 
-// Todos los campos de plan a 0 antes de recalcular
 function resetPlanHiddens() {
   ['hPlanTelefonia','hPlanCableStandar','hPlanCableSup',
    'hPlanInt200','hPlanInt400','hPlanInt1500'].forEach(id => {
@@ -1262,17 +1308,13 @@ function resetPlanHiddens() {
   });
 }
 
-function buildComboSelect(label, opciones, comboIndex, required) {
-  const reqMark = required ? '<span style="color:#ff9090;margin-left:2px;">*</span>' : '';
-  const opts = opciones.map(o =>
-    `<option value="${o.field}">${o.label}</option>`
-  ).join('');
+function buildComboSelect(label, opciones, idx, required) {
+  const req = required ? '<span style="color:var(--red);margin-left:2px;">*</span>' : '';
+  const opts = opciones.map(o => `<option value="${o.field}">${o.label}</option>`).join('');
   return `
-    <div class="form-group" style="margin-bottom:10px;">
-      <label class="form-label" style="font-size:10px;">${label}${reqMark}</label>
-      <select class="form-input combo-plan" data-idx="${comboIndex}"
-              style="background:rgba(255,255,255,0.05);"
-              onchange="onComboChange()">
+    <div class="fgroup" style="margin-bottom:10px;">
+      <label class="flabel" style="font-size:10px;">${label}${req}</label>
+      <select class="finput combo-plan" data-idx="${idx}" onchange="onComboChange()">
         <option value="">— Seleccionar —</option>
         ${opts}
       </select>
@@ -1283,39 +1325,29 @@ function renderCombosPlay(play) {
   const container = document.getElementById('combosPlayContainer');
   const grupo     = document.getElementById('grupoCombosPlay');
   const hint      = document.getElementById('hintPlay');
-
   resetPlanHiddens();
   container.innerHTML = '';
   grupo.style.display = 'block';
-
   const hints = {
     '1play': '1Play — elige 1 servicio',
     '2play': '2Play — Internet obligatorio + Telefonía o Cable',
     '3play': '3Play — Internet + Telefonía + Cable',
   };
   hint.textContent = hints[play] || '';
-
   if (play === '1play') {
-    // Un combo con todas las opciones
-    const todas = [...PLANES.internet, ...PLANES.telefonia, ...PLANES.cable];
-    container.innerHTML = buildComboSelect('Servicio', todas, 0, true);
+    container.innerHTML = buildComboSelect('Servicio', [...PLANES.internet, ...PLANES.telefonia, ...PLANES.cable], 0, true);
   }
-
   if (play === '2play') {
-    // Combo 1: Internet (obligatorio) | Combo 2: Telefonía o Cable
     container.innerHTML =
       buildComboSelect('Internet (obligatorio)', PLANES.internet, 0, true) +
       buildComboSelect('Telefonía o Cable', [...PLANES.telefonia, ...PLANES.cable], 1, true);
   }
-
   if (play === '3play') {
-    // Combo 1: Internet | Combo 2: Telefonía | Combo 3: Cable
     container.innerHTML =
       buildComboSelect('Internet (obligatorio)', PLANES.internet,  0, true) +
       buildComboSelect('Telefonía',              PLANES.telefonia, 1, true) +
       buildComboSelect('Cable TV',               PLANES.cable,     2, true);
   }
-
   onComboChange();
 }
 
@@ -1330,9 +1362,8 @@ function onComboChange() {
   checkSubmit();
 }
 
-// ── LÍNEAS MÓVIL ──────────────────────────
+// ── LÍNEAS MÓVIL ─────────────────────────────────────
 let lineaCount = 0;
-
 function addLinea() {
   const i = lineaCount++;
   const tipoVenta = document.getElementById('inputTipoVentaMovil')?.value || '';
@@ -1378,7 +1409,7 @@ function addLinea() {
       </select>
     </td>
     <td>
-      <select name="lineas[${i}][descuento]" class="linea-select" onchange="toggleWf(this, ${i})">
+      <select name="lineas[${i}][descuento]" class="linea-select" onchange="toggleWf(this,${i})">
         <option value="no_aplica">No aplica</option>
         <option value="50%">50%</option>
         <option value="bajo_plantilla" ${document.querySelector('input[name=\'tipo_ingreso\']')?.value === 'centralizado' ? '' : 'disabled'}>Bajo plantilla</option>
@@ -1389,7 +1420,7 @@ function addLinea() {
              placeholder="6 dígitos" maxlength="6" style="display:none">
     </td>
     <td class="td-large" style="${esAlta ? '' : 'display:none'}">
-      <input type="text" name="lineas[${i}][large_asociada]" class="linea-input" placeholder="N° serie large">
+      <input type="text" name="lineas[${i}][large_asociada]" class="linea-input" placeholder="N° serie">
     </td>
     <td>
       <button type="button" class="btn-remove-linea" onclick="removeLinea(this)">×</button>
@@ -1400,26 +1431,22 @@ function addLinea() {
 
 function removeLinea(btn) {
   const tbody = document.getElementById('lineasBody');
-  if (tbody.children.length > 1) {
-    btn.closest('tr').remove();
-  }
+  if (tbody.children.length > 1) btn.closest('tr').remove();
 }
 
 function toggleWf(select, i) {
-  const wf = document.getElementById(`wf_${i}`);
-  wf.style.display = select.value === 'bajo_plantilla' ? 'block' : 'none';
+  document.getElementById(`wf_${i}`).style.display = select.value === 'bajo_plantilla' ? 'block' : 'none';
 }
 
-// ── TIPO INGRESO ──────────────────────────
+// ── TIPO INGRESO ─────────────────────────────────────
 function onTipoIngresoChange(valor) {
   const esCentralizado  = valor === 'centralizado';
   const esAlmacenPropio = valor === 'almacen_propio';
 
-  // B1: "Bajo plantilla" solo disponible si es CENTRALIZADO
   document.querySelectorAll('select[name$="[descuento]"]').forEach(select => {
-    const optPlantilla = select.querySelector('option[value="bajo_plantilla"]');
-    if (!optPlantilla) return;
-    optPlantilla.disabled = !esCentralizado;
+    const opt = select.querySelector('option[value="bajo_plantilla"]');
+    if (!opt) return;
+    opt.disabled = !esCentralizado;
     if (!esCentralizado && select.value === 'bajo_plantilla') {
       select.value = 'no_aplica';
       const i = select.name.match(/\[(\d+)\]/)?.[1];
@@ -1427,28 +1454,20 @@ function onTipoIngresoChange(valor) {
     }
   });
 
-  // B3: Almacén Propio → ocultar campos de delivery (solo facturación)
-  const camposDelivery = [
-    'inputGeoX', 'inputGeoY',         // coordenadas
-  ];
-  const gruposDelivery = [
-    document.querySelector('[name="plano_geodir"]')?.closest('.form-group'),
-    document.querySelector('[name="direccion_entrega"]')?.closest('.form-group'),
-    document.querySelector('[name="referencias_entrega"]')?.closest('.form-group'),
-  ];
-  // El row de coordenadas+plano
-  const rowCoords = document.getElementById('inputGeoX')?.closest('.form-row');
+  const rowCoords = document.getElementById('inputGeoX')?.closest('.frow');
   if (rowCoords) rowCoords.style.display = esAlmacenPropio ? 'none' : '';
 
-  // El group de dirección entrega y referencia
-  gruposDelivery.forEach(g => { if (g) g.style.display = esAlmacenPropio ? 'none' : ''; });
+  [
+    document.querySelector('[name="plano_geodir"]')?.closest('.fgroup'),
+    document.querySelector('[name="direccion_entrega"]')?.closest('.fgroup'),
+    document.querySelector('[name="referencias_entrega"]')?.closest('.fgroup'),
+  ].forEach(g => { if (g) g.style.display = esAlmacenPropio ? 'none' : ''; });
 
-  // El group de motorizado también se oculta (no hay delivery)
-  const grupoMotorizado = document.querySelector('[name="telefono_referencia_movil"]')?.closest('.form-group');
-  if (grupoMotorizado) grupoMotorizado.style.display = esAlmacenPropio ? 'none' : '';
+  const motorizado = document.querySelector('[name="telefono_referencia_movil"]')?.closest('.fgroup');
+  if (motorizado) motorizado.style.display = esAlmacenPropio ? 'none' : '';
 }
 
-// ── DOCUMENTOS ────────────────────────────
+// ── DOCUMENTOS ───────────────────────────────────────
 function previewDocs(input) {
   const list = document.getElementById('docList');
   Array.from(input.files).forEach(file => {
@@ -1457,23 +1476,70 @@ function previewDocs(input) {
     item.innerHTML = `
       <span>📄</span>
       <span>${file.name}</span>
-      <span style="color:rgba(255,255,255,0.25);font-size:11px;">${(file.size/1024).toFixed(0)} KB</span>
+      <span style="color:var(--text-faint);font-size:11px;">${(file.size/1024).toFixed(0)} KB</span>
       <button type="button" class="doc-item-remove" onclick="this.parentElement.remove()">×</button>
     `;
     list.appendChild(item);
   });
 }
 
-// ── VALIDACIÓN COMPLETA ANTES DE ENVIAR ───
+// ── PROGRESO ─────────────────────────────────────────
+function updateProgress() {
+  const tipo        = document.getElementById('inputTipo').value;
+  const tipoIngreso = document.querySelector('input[name="tipo_ingreso"]')?.value;
+  const nombreRep   = document.querySelector('input[name="nombre_representante"]')?.value?.trim();
+  const tipoDoc     = document.querySelector('input[name="tipo_documento"]')?.value;
+  const nroDoc      = document.getElementById('inputNroDoc')?.value?.trim();
+
+  let done = 0;
+  if (tipo) done++;
+  if (tipoIngreso) done++;
+  if (nombreRep && tipoDoc && nroDoc) done++;
+
+  if (tipo === 'fija') {
+    const dir  = document.querySelector('input[name="direccion_instalacion"]')?.value?.trim();
+    const tech = document.querySelector('input[name="tecnologia"]')?.value;
+    if (dir && tech) done++;
+  }
+  if (tipo === 'movil') {
+    const entrega = document.querySelector('input[name="tipo_entrega"]')?.value;
+    const campana = document.querySelector('input[name="campana_movil"]')?.value;
+    if (entrega && campana) done++;
+  }
+
+  const docs = document.getElementById('docList')?.children?.length > 0;
+  if (docs) done++;
+
+  const pct = Math.round((done / 5) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `${done} de 5 pasos`;
+
+  // Actualizar stepper
+  for (let s = 1; s <= 5; s++) {
+    const si = document.getElementById(`si${s}`);
+    si.classList.remove('active','done');
+    if (s < done + 1) si.classList.add('done');
+    else if (s === done + 1) si.classList.add('active');
+  }
+}
+
+// ── SCROLL A CARD ────────────────────────────────────
+function scrollToCard(id) {
+  const el = document.getElementById(id);
+  if (el && el.style.display !== 'none') {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// ── VALIDACIÓN ───────────────────────────────────────
 function getValidationErrors() {
   const tipo        = document.getElementById('inputTipo').value;
   const tipoIngreso = document.querySelector('input[name="tipo_ingreso"]')?.value;
   const errors      = [];
 
   if (!tipo)        { errors.push('Selecciona el tipo de servicio (Móvil o Fija).'); return errors; }
-  if (!tipoIngreso) { errors.push('Selecciona el tipo de ingreso (PDV, Centralizado, etc.).'); }
+  if (!tipoIngreso) { errors.push('Selecciona el tipo de ingreso.'); }
 
-  // Datos del cliente (paso 3)
   const nombreRep = document.querySelector('input[name="nombre_representante"]')?.value?.trim();
   const tipoDoc   = document.querySelector('input[name="tipo_documento"]')?.value;
   const nroDoc    = document.getElementById('inputNroDoc')?.value?.trim();
@@ -1481,69 +1547,46 @@ function getValidationErrors() {
   const correo    = document.querySelector('input[name="correo"]')?.value?.trim();
 
   if (!nombreRep) errors.push('Ingresa el nombre del representante.');
-  if (!tipoDoc)   errors.push('Selecciona el tipo de documento (DNI o CE).');
+  if (!tipoDoc)   errors.push('Selecciona el tipo de documento.');
   if (!nroDoc)    errors.push('Ingresa el número de documento.');
   if (!telefono)  errors.push('Ingresa el teléfono del representante.');
   if (!correo)    errors.push('Ingresa el correo electrónico.');
 
-  // Campos específicos de FIJA
   if (tipo === 'fija') {
-    const tipoVentaFija   = document.querySelector('input[name="tipo_venta_fija"]')?.value;
-    const direccion       = document.querySelector('input[name="direccion_instalacion"]')?.value?.trim();
-    const tecnologia      = document.querySelector('input[name="tecnologia"]')?.value;
-    const campana         = document.querySelector('input[name="campana_fija"]')?.value;
-    const tipoProducto    = document.querySelector('input[name="tipo_producto_fija"]')?.value;
-
-    if (!tipoVentaFija) errors.push('Selecciona el tipo de venta fija (Alta o Portabilidad).');
-    if (!direccion)     errors.push('Ingresa la dirección de instalación.');
-    if (!tecnologia)    errors.push('Selecciona la tecnología (HFC o FTTH).');
-    if (!campana)       errors.push('Selecciona la campaña fija.');
-    if (!tipoProducto)  errors.push('Selecciona el tipo de producto (1Play, 2Play o 3Play).');
-
-    // Validar que los combos de planes estén seleccionados
-    const combos = document.querySelectorAll('.combo-plan');
-    combos.forEach(sel => {
+    if (!document.querySelector('input[name="tipo_venta_fija"]')?.value)      errors.push('Selecciona el tipo de venta fija.');
+    if (!document.querySelector('input[name="direccion_instalacion"]')?.value?.trim()) errors.push('Ingresa la dirección de instalación.');
+    if (!document.querySelector('input[name="tecnologia"]')?.value)           errors.push('Selecciona la tecnología.');
+    if (!document.querySelector('input[name="campana_fija"]')?.value)         errors.push('Selecciona la campaña fija.');
+    if (!document.querySelector('input[name="tipo_producto_fija"]')?.value)   errors.push('Selecciona el tipo de producto.');
+    document.querySelectorAll('.combo-plan').forEach(sel => {
       if (!sel.value) errors.push('Selecciona todos los planes del servicio fijo.');
     });
   }
 
-  // Campos específicos de MÓVIL
   if (tipo === 'movil') {
-    const tipoVentaMovil = document.querySelector('input[name="tipo_venta_movil"]')?.value;
-    const tipoEntrega    = document.querySelector('input[name="tipo_entrega"]')?.value;
-    const campana        = document.querySelector('input[name="campana_movil"]')?.value;
-    const fechaDespacho  = document.querySelector('input[name="fecha_despacho"]')?.value;
-    const rangoHorario   = document.querySelector('input[name="rango_horario"]')?.value;
+    if (!document.querySelector('input[name="tipo_venta_movil"]')?.value)  errors.push('Selecciona el tipo de venta móvil.');
+    if (!document.querySelector('input[name="tipo_entrega"]')?.value)      errors.push('Selecciona el tipo de entrega.');
+    if (!document.querySelector('input[name="campana_movil"]')?.value)     errors.push('Selecciona la campaña móvil.');
+    if (!document.querySelector('input[name="fecha_despacho"]')?.value)    errors.push('Ingresa la fecha de despacho.');
+    if (!document.querySelector('input[name="rango_horario"]')?.value)     errors.push('Selecciona el rango horario.');
 
-    if (!tipoVentaMovil) errors.push('Selecciona el tipo de venta móvil.');
-    if (!tipoEntrega)    errors.push('Selecciona el tipo de entrega (Delivery o Recojo en CAC).');
-    if (!campana)        errors.push('Selecciona la campaña móvil.');
-    if (!fechaDespacho)  errors.push('Ingresa la fecha de despacho.');
-    if (!rangoHorario)   errors.push('Selecciona el rango horario.');
-
-    // Delivery: dirección requerida
-    if (tipoEntrega === 'delivery') {
-      const dir = document.querySelector('input[name="direccion_entrega"]')?.value?.trim();
-      if (!dir) errors.push('Ingresa la dirección de entrega (delivery).');
+    const entrega = document.querySelector('input[name="tipo_entrega"]')?.value;
+    if (entrega === 'delivery') {
+      if (!document.querySelector('input[name="direccion_entrega"]')?.value?.trim())
+        errors.push('Ingresa la dirección de entrega.');
+    }
+    if (entrega === 'recojo_cac') {
+      if (!document.getElementById('inputCacId')?.value)
+        errors.push('Selecciona un CAC para el recojo.');
     }
 
-    // CAC: debe estar seleccionado
-    if (tipoEntrega === 'recojo_cac') {
-      const cacId = document.getElementById('inputCacId')?.value;
-      if (!cacId) errors.push('Selecciona un CAC para el recojo.');
-    }
-
-    // Líneas: al menos una con plan
     const lineas = document.querySelectorAll('#lineasBody tr');
     if (!lineas.length) {
       errors.push('Agrega al menos una línea.');
     } else {
       let sinPlan = false;
-      lineas.forEach(tr => {
-        const plan = tr.querySelector('select[name*="[plan]"]')?.value;
-        if (!plan) sinPlan = true;
-      });
-      if (sinPlan) errors.push('Todas las líneas deben tener un plan seleccionado.');
+      lineas.forEach(tr => { if (!tr.querySelector('select[name*="[plan]"]')?.value) sinPlan = true; });
+      if (sinPlan) errors.push('Todas las líneas deben tener un plan.');
     }
   }
 
@@ -1551,75 +1594,54 @@ function getValidationErrors() {
 }
 
 function showClientErrors(errors) {
-  // Quitar error previo si existe
   const prev = document.getElementById('clientErrors');
   if (prev) prev.remove();
-
   if (!errors.length) return true;
 
   const div = document.createElement('div');
   div.id = 'clientErrors';
-  div.style.cssText = `
-    background: rgba(255,80,80,0.1);
-    border: 1px solid rgba(255,80,80,0.3);
-    border-radius: 8px;
-    padding: 12px 14px;
-    margin-bottom: 12px;
-    animation: fadeIn .2s ease;
-  `;
+  div.className = 'err-box';
+  div.style.marginBottom = '12px';
   div.innerHTML = `
-    <div style="font-size:12px;font-weight:700;color:#ff9090;margin-bottom:6px;">⚠ Completa los campos requeridos:</div>
-    <ul style="margin:0;padding-left:16px;">
-      ${errors.map(e => `<li style="font-size:11px;color:#ff9090;margin-bottom:3px;">${e}</li>`).join('')}
-    </ul>
+    <div class="err-box-title">⚠ Completa los campos requeridos:</div>
+    <ul>${errors.map(e => `<li>${e}</li>`).join('')}</ul>
   `;
-
-  const sidebarCard = document.getElementById('btnSubmit').parentElement;
-  sidebarCard.insertBefore(div, sidebarCard.firstChild);
+  const scard = document.getElementById('btnSubmit').closest('.scard');
+  scard.insertBefore(div, scard.firstChild);
   div.scrollIntoView({ behavior: 'smooth', block: 'center' });
   return false;
 }
 
-// ── CHECKSUBMIT (mantiene apariencia visual) ─────────
+// ── CHECK SUBMIT ─────────────────────────────────────
 function checkSubmit() {
   const tipo        = document.getElementById('inputTipo').value;
   const tipoIngreso = document.querySelector('input[name="tipo_ingreso"]')?.value;
-  const btn         = document.getElementById('btnSubmit');
-  const hint        = document.getElementById('submitHint');
-
+  const btn  = document.getElementById('btnSubmit');
+  const hint = document.getElementById('submitHint');
   const listo = tipo && tipoIngreso;
-  btn.style.opacity  = listo ? '1' : '0.5';
-  btn.style.cursor   = listo ? 'pointer' : 'not-allowed';
+  btn.disabled = !listo;
   if (hint) hint.style.display = listo ? 'none' : 'block';
+  updateProgress();
 }
 
-// ── SUBMIT: validar antes de enviar ──────────────────
+// ── SUBMIT ───────────────────────────────────────────
 document.getElementById('formVenta').addEventListener('submit', function(e) {
   const errors = getValidationErrors();
-
-  if (errors.length) {
-    e.preventDefault();
-    showClientErrors(errors);
-    return;
-  }
-
-  // Feedback visual de carga
+  if (errors.length) { e.preventDefault(); showClientErrors(errors); return; }
   const btn = document.getElementById('btnSubmit');
   btn.disabled    = true;
   btn.textContent = 'Enviando…';
-  btn.style.opacity = '0.7';
 });
 
-// Escuchar cambios en inputs
-document.getElementById('formVenta').addEventListener('input', checkSubmit);
+document.getElementById('formVenta').addEventListener('input',  checkSubmit);
 document.getElementById('formVenta').addEventListener('change', checkSubmit);
 
-// Si hay errores de servidor (old input), restaurar tipo seleccionado
+// ── RESTAURAR SI HAY ERRORES DE SERVIDOR ─────────────
 @if($errors->any() && old('tipo'))
 window.addEventListener('DOMContentLoaded', () => {
   const tipoOld = @json(old('tipo'));
   if (tipoOld) setTipo(tipoOld);
-  document.getElementById('serverErrors')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.getElementById('serverErrors')?.scrollIntoView({ behavior:'smooth', block:'center' });
 });
 @endif
 </script>

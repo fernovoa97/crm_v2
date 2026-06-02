@@ -997,7 +997,7 @@ html.light .cac-drop { background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.12)
                 <th>Equipo / SIM</th>
                 <th>Descuento</th>
                 <th>N° WF</th>
-                <th class="col-large">Large</th>
+                
                 <th style="width:32px;"></th>
               </tr>
             </thead>
@@ -1005,7 +1005,12 @@ html.light .cac-drop { background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.12)
           </table>
         </div>
         <button type="button" class="btn-add-linea" onclick="addLinea()">+ Agregar línea</button>
-
+<div id="grupoLarge" style="display:none; margin-top:14px;">
+  <div class="fgroup">
+    <label class="flabel">Large asociada <span class="hint">(alta nueva)</span></label>
+    <input type="text" name="large_asociada" class="finput" placeholder="N° serie">
+  </div>
+</div>
       </div>
     </div>
 
@@ -1030,7 +1035,7 @@ html.light .cac-drop { background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.12)
           <input type="file" id="inputDocs" name="documentos[]" multiple
                  accept=".pdf,.xlsx,.xls,.csv,.jpg,.jpeg,.png,.doc,.docx"
                  onchange="previewDocs(this); updateProgress()"
-                 style="display:none" onchange="previewDocs(this)">
+                 style="display:none">
                  
         </div>
         <div class="doc-list" id="docList"></div>
@@ -1217,12 +1222,15 @@ function syncGeodirCoords() {
 function togglePortaMovil(tipo) {
   const esPorta = tipo === 'porta';
   const esAlta  = tipo === 'alta';
+
+  // Thead + tbody: solo columnas porta
   document.querySelectorAll('.col-porta').forEach(el => el.style.display = esPorta ? '' : 'none');
-  document.querySelectorAll('.col-large').forEach(el => el.style.display = esAlta  ? '' : 'none');
   document.querySelectorAll('#lineasBody tr').forEach(tr => {
-    tr.querySelector('.td-porta').style.display = esPorta ? '' : 'none';
-    tr.querySelector('.td-large').style.display = esAlta  ? '' : 'none';
+    tr.querySelectorAll('.td-porta').forEach(td => td.style.display = esPorta ? '' : 'none');
   });
+
+  // Large: campo único fuera de la tabla
+  document.getElementById('grupoLarge').style.display = esAlta ? 'block' : 'none';
 }
 
 // ── TIPO ENTREGA ─────────────────────────────────────
@@ -1368,7 +1376,6 @@ function addLinea() {
   const i = lineaCount++;
   const tipoVenta = document.getElementById('inputTipoVentaMovil')?.value || '';
   const esPorta   = tipoVenta === 'porta';
-  const esAlta    = tipoVenta === 'alta';
 
   const tr = document.createElement('tr');
   tr.innerHTML = `
@@ -1418,9 +1425,6 @@ function addLinea() {
     <td>
       <input type="text" name="lineas[${i}][nro_wf]" class="linea-input" id="wf_${i}"
              placeholder="6 dígitos" maxlength="6" style="display:none">
-    </td>
-    <td class="td-large" style="${esAlta ? '' : 'display:none'}">
-      <input type="text" name="lineas[${i}][large_asociada]" class="linea-input" placeholder="N° serie">
     </td>
     <td>
       <button type="button" class="btn-remove-linea" onclick="removeLinea(this)">×</button>

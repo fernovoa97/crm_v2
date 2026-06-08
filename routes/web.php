@@ -22,7 +22,6 @@ Route::middleware('auth')->group(function () {
 });
 
 // Rutas solo admin
-
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('users', UserController::class);
     Route::post('cacs/import', [CacController::class, 'import'])->name('cacs.import');
@@ -61,6 +60,7 @@ Route::middleware(['auth'])->prefix('asesor')->name('asesor.')->group(function (
     Route::post('leads/tipificar', [LeadController::class, 'tipificar'])->name('leads.tipificar');
 
     // Ventas asesor — sin parámetros primero
+    Route::get('ventas/create-directo', [VentaController::class, 'createDirecto'])->name('ventas.create-directo');
     Route::get('ventas/create', [VentaController::class, 'create'])->name('ventas.create');
     Route::get('ventas', [VentaController::class, 'asesorIndex'])->name('ventas.index');
     Route::post('ventas', [VentaController::class, 'store'])->name('ventas.store');
@@ -80,8 +80,5 @@ Route::middleware(['auth'])->prefix('mesa')->name('mesa.')->group(function () {
     Route::patch('ventas/{venta}/aprobar-edicion', [VentaController::class, 'aprobarEdicion'])->name('ventas.aprobar-edicion');
     Route::patch('ventas/{venta}/rechazar-edicion', [VentaController::class, 'rechazarEdicion'])->name('ventas.rechazar-edicion');
 });
-
-
-
 
 require __DIR__.'/auth.php';

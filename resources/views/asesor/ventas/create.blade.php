@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Nueva Venta')
-@section('subtitle', $lead->razon_social . ' — RUC ' . $lead->ruc)
+@section('subtitle', ($lead->id ? $lead->razon_social . ' — RUC ' . $lead->ruc : 'Venta directa'))
 
 @section('topbar-actions')
   <a href="{{ route('asesor.leads.index') }}#prospectos" style="
@@ -536,13 +536,22 @@ html.light .cac-drop { background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.12)
 
 <form method="POST" action="{{ route('asesor.ventas.store') }}" enctype="multipart/form-data" id="formVenta">
 @csrf
-<input type="hidden" name="lead_id"   value="{{ $lead->id }}">
-<input type="hidden" name="tipo"      id="inputTipo"        value="">
+<input type="hidden" name="lead_id" value="{{ $lead->id ?? '' }}">
+<input type="hidden" name="tipo"    id="inputTipo" value="">
 
 <div class="wizard-wrap">
 
   {{-- ── STEPPER ── --}}
   <div class="stepper" id="stepper">
+    @if(!$lead->id)
+    <div class="stepper-item" id="si0" onclick="scrollToCard('c0')">
+      <div class="step-dot">0</div>
+      <div class="step-info">
+        <div class="step-label">Empresa</div>
+        <div class="step-sub">RUC y razón social</div>
+      </div>
+    </div>
+    @endif
     <div class="stepper-item" id="si1" onclick="scrollToCard('c1')">
       <div class="step-dot">1</div>
       <div class="step-info">
@@ -582,6 +591,133 @@ html.light .cac-drop { background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.12)
 
   {{-- ── COLUMNA CENTRAL ── --}}
   <div id="mainCol">
+
+{{-- PASO 0: solo si es venta directa (sin lead previo) --}}
+@if(!$lead->id)
+
+<div class="wcard active-card" id="c0">
+    <div class="wcard-head">
+        <div class="wcard-num">0</div>
+        <div class="wcard-title">
+            Datos de nueva empresa
+        </div>
+    </div>
+
+    <div class="wcard-body">
+
+        <div class="frow">
+            <div class="fgroup">
+                <label class="flabel">RUC <span class="req">*</span></label>
+                <input
+    type="text"
+    name="ruc"
+    id="rucEmpresa"
+    value="{{ old('ruc', $lead->ruc) }}"
+    required
+>
+            </div>
+
+            <div class="fgroup">
+                <label class="flabel">Razón social <span class="req">*</span></label>
+                <input
+    type="text"
+    name="razon_social"
+    id="razonEmpresa"
+    value="{{ old('razon_social', $lead->razon_social) }}"
+    required
+>
+            </div>
+        </div>
+
+        <div class="frow">
+            <div class="fgroup">
+                <label class="flabel">Representante <span class="req">*</span></label>
+                <input
+                    type="text"
+                    name="nombre_representante"
+                    class="finput"
+                    value="{{ old('nombre_representante', $lead->nombre_rl) }}"
+                    required
+                >
+            </div>
+
+            <div class="fgroup">
+                <label class="flabel">Teléfono <span class="req">*</span></label>
+                <input
+                    type="text"
+                    name="telefono_representante"
+                    class="finput"
+                    value="{{ old('telefono_representante', $lead->telf1) }}"
+                    required
+                >
+            </div>
+        </div>
+
+        <div class="frow">
+            <div class="fgroup">
+                <label class="flabel">Correo <span class="req">*</span></label>
+                <input
+                    type="email"
+                    name="correo"
+                    class="finput"
+                    value="{{ old('correo', $lead->correo_rl) }}"
+                    required
+                >
+            </div>
+
+            <div class="fgroup">
+                <label class="flabel">Segmento</label>
+                <select name="segmento" class="finput">
+                    <option value="">— Seleccionar —</option>
+                    <option value="Microempresa">Microempresa</option>
+                    <option value="Pyme">Pyme</option>
+                    <option value="Mayores">Mayores</option>
+                    <option value="otros">otros</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="fgroup" style="margin-top:12px;">
+            <label class="flabel">Departamento</label>
+            <input
+                type="text"
+                name="departamento"
+                class="finput"
+                value="{{ old('departamento') }}"
+            >
+        </div>
+
+        <div class="fgroup" style="margin-top:16px;">
+    <label style="
+        display:flex;
+        align-items:center;
+        gap:10px;
+        cursor:pointer;
+        font-size:13px;
+        color:var(--text);
+        user-select:none;
+    ">
+        <input
+            type="checkbox"
+            name="guardar_como_lead"
+            value="1"
+            checked
+            style="
+                width:16px;
+                height:16px;
+                accent-color:#2FCAF5;
+                cursor:pointer;
+            "
+        >
+
+        Guardar también como lead en mi CRM
+    </label>
+</div>
+
+    </div>
+</div>
+
+@endif
 
     {{-- PASO 1: TIPO --}}
     <div class="wcard active-card" id="c1">
@@ -682,15 +818,30 @@ html.light .cac-drop { background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.12)
         </div>
 
         <div class="frow" style="margin-bottom:16px;">
-          <div class="fgroup">
-            <label class="flabel">RUC</label>
-            <input type="text" class="finput" value="{{ $lead->ruc }}" readonly>
-          </div>
-          <div class="fgroup">
-            <label class="flabel">Razón Social</label>
-            <input type="text" class="finput" value="{{ $lead->razon_social }}" readonly>
-          </div>
-        </div>
+
+    <div class="fgroup">
+        <label class="flabel">RUC</label>
+        <input
+            type="text"
+            class="finput"
+            id="previewRuc"
+            value="{{ old('ruc', $lead->ruc ?? '') }}"
+            readonly
+        >
+    </div>
+
+    <div class="fgroup">
+        <label class="flabel">Razón Social</label>
+        <input
+            type="text"
+            class="finput"
+            id="previewRazon"
+            value="{{ old('razon_social', $lead->razon_social ?? '') }}"
+            readonly
+        >
+    </div>
+
+</div>
 
         <div class="fgroup">
           <label class="flabel">
@@ -997,7 +1148,6 @@ html.light .cac-drop { background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.12)
                 <th>Equipo / SIM</th>
                 <th>Descuento</th>
                 <th>N° WF</th>
-                
                 <th style="width:32px;"></th>
               </tr>
             </thead>
@@ -1005,12 +1155,14 @@ html.light .cac-drop { background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.12)
           </table>
         </div>
         <button type="button" class="btn-add-linea" onclick="addLinea()">+ Agregar línea</button>
-<div id="grupoLarge" style="display:none; margin-top:14px;">
-  <div class="fgroup">
-    <label class="flabel">Large asociada <span class="hint">(alta nueva)</span></label>
-    <input type="text" name="large_asociada" class="finput" placeholder="N° serie">
-  </div>
-</div>
+
+        <div id="grupoLarge" style="display:none; margin-top:14px;">
+          <div class="fgroup">
+            <label class="flabel">Large asociada <span class="hint">(alta nueva)</span></label>
+            <input type="text" name="large_asociada" class="finput" placeholder="N° serie">
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1036,7 +1188,6 @@ html.light .cac-drop { background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.12)
                  accept=".pdf,.xlsx,.xls,.csv,.jpg,.jpeg,.png,.doc,.docx"
                  onchange="previewDocs(this); updateProgress()"
                  style="display:none">
-                 
         </div>
         <div class="doc-list" id="docList"></div>
       </div>
@@ -1059,15 +1210,16 @@ html.light .cac-drop { background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.12)
     {{-- Lead info --}}
     <div class="scard">
       <div class="scard-title">Datos del lead</div>
-      <div class="srow"><span class="slabel">RUC</span><span class="sval">{{ $lead->ruc }}</span></div>
-      <div class="srow"><span class="slabel">Empresa</span><span class="sval">{{ $lead->razon_social }}</span></div>
+      <div class="srow"><span class="slabel">RUC</span><span class="sval">{{ $lead->ruc ?: '—' }}</span></div>
+      <div class="srow"><span class="slabel">Empresa</span><span class="sval">{{ $lead->razon_social ?: '—' }}</span></div>
       <div class="srow"><span class="slabel">Representante</span><span class="sval">{{ $lead->nombre_rl ?? '—' }}</span></div>
       <div class="srow"><span class="slabel">Teléfono</span><span class="sval">{{ $lead->telf1 ?? '—' }}</span></div>
       <div class="srow"><span class="slabel">Segmento</span><span class="sval">{{ ucfirst($lead->segmento ?? '—') }}</span></div>
       <div class="srow"><span class="slabel">Depto.</span><span class="sval">{{ $lead->departamento ?? '—' }}</span></div>
     </div>
 
-    {{-- Ventas anteriores --}}
+    {{-- Ventas anteriores — solo si el lead existe en BD --}}
+    @if($lead->id)
     <div class="scard" id="sidebarVentas" style="display:none;">
       <div class="scard-title">Ventas anteriores</div>
       @forelse($lead->ventas as $v)
@@ -1084,6 +1236,7 @@ html.light .cac-drop { background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.12)
         <div style="font-size:12px;color:var(--text-faint);">Sin ventas anteriores</div>
       @endforelse
     </div>
+    @endif
 
     {{-- Errores servidor --}}
     @if($errors->any())
@@ -1127,7 +1280,9 @@ function setTipo(tipo) {
     const el = document.getElementById(id);
     el.style.display = 'block';
   });
-  document.getElementById('sidebarVentas').style.display = 'block';
+
+  const sidebarVentas = document.getElementById('sidebarVentas');
+  if (sidebarVentas) sidebarVentas.style.display = 'block';
 
   document.getElementById('pasoFija').style.display  = tipo === 'fija'  ? 'block' : 'none';
   document.getElementById('pasoMovil').style.display = tipo === 'movil' ? 'block' : 'none';
@@ -1169,7 +1324,6 @@ function setTipo(tipo) {
     document.getElementById('inputFechaDespacho').value = hoy;
     const sla = document.getElementById('bubbleSla3h');
     if (sla && !sla.classList.contains('active')) setBubble(sla, 'rango_horario', 'sla_3h');
-    // Aplicar porta default ANTES de agregar la primera línea
     setTimeout(() => {
       const porta = document.querySelector('#grupoTipoVentaMovil .bubble[onclick*="porta"]');
       if (porta) { setBubble(porta, 'tipo_venta_movil', 'porta'); togglePortaMovil('porta'); }
@@ -1223,13 +1377,11 @@ function togglePortaMovil(tipo) {
   const esPorta = tipo === 'porta';
   const esAlta  = tipo === 'alta';
 
-  // Thead + tbody: solo columnas porta
   document.querySelectorAll('.col-porta').forEach(el => el.style.display = esPorta ? '' : 'none');
   document.querySelectorAll('#lineasBody tr').forEach(tr => {
     tr.querySelectorAll('.td-porta').forEach(td => td.style.display = esPorta ? '' : 'none');
   });
 
-  // Large: campo único fuera de la tabla
   document.getElementById('grupoLarge').style.display = esAlta ? 'block' : 'none';
 }
 
@@ -1487,6 +1639,12 @@ function previewDocs(input) {
   });
 }
 
+// ── GUARDAR LEAD ─────────────────────────────────────
+function toggleGuardarLead(label) {
+  label.classList.toggle('active');
+  document.getElementById('chkGuardarLead').checked = label.classList.contains('active');
+}
+
 // ── PROGRESO ─────────────────────────────────────────
 function updateProgress() {
   const tipo        = document.getElementById('inputTipo').value;
@@ -1521,6 +1679,7 @@ function updateProgress() {
   // Actualizar stepper
   for (let s = 1; s <= 5; s++) {
     const si = document.getElementById(`si${s}`);
+    if (!si) continue;
     si.classList.remove('active','done');
     if (s < done + 1) si.classList.add('done');
     else if (s === done + 1) si.classList.add('active');
@@ -1543,6 +1702,13 @@ function getValidationErrors() {
 
   if (!tipo)        { errors.push('Selecciona el tipo de servicio (Móvil o Fija).'); return errors; }
   if (!tipoIngreso) { errors.push('Selecciona el tipo de ingreso.'); }
+
+  // Validar RUC y razón social si es venta directa
+  const inputRuc = document.querySelector('input[name="ruc"]');
+  if (inputRuc && !inputRuc.closest('[readonly]')) {
+    if (!inputRuc.value.trim()) errors.push('Ingresa el RUC de la empresa.');
+    if (!document.querySelector('input[name="razon_social"]')?.value?.trim()) errors.push('Ingresa la razón social.');
+  }
 
   const nombreRep = document.querySelector('input[name="nombre_representante"]')?.value?.trim();
   const tipoDoc   = document.querySelector('input[name="tipo_documento"]')?.value;
@@ -1650,3 +1816,29 @@ window.addEventListener('DOMContentLoaded', () => {
 @endif
 </script>
 @endsection
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const ruc = document.getElementById('rucEmpresa');
+    const razon = document.getElementById('razonEmpresa');
+
+    const previewRuc = document.getElementById('previewRuc');
+    const previewRazon = document.getElementById('previewRazon');
+
+    function syncEmpresa() {
+        if (ruc && previewRuc) {
+            previewRuc.value = ruc.value;
+        }
+
+        if (razon && previewRazon) {
+            previewRazon.value = razon.value;
+        }
+    }
+
+    ruc?.addEventListener('input', syncEmpresa);
+    razon?.addEventListener('input', syncEmpresa);
+
+    syncEmpresa();
+});
+</script>

@@ -298,8 +298,8 @@
   </div>
 @endif
 
-<form method="POST" action="{{ route('mesa.ventas.update', $venta) }}" enctype="multipart/form-data" id="formMesa">
-@csrf @method('PATCH')
+
+
 
 <div class="detail-layout">
 
@@ -441,40 +441,6 @@
           </span>
         </div>
 
-        <div class="section-title">
-          Campos de Mesa de Control
-          <span class="mesa-badge" style="font-size:10px;padding:1px 7px;border-radius:10px;background:rgba(29,158,117,0.15);color:#5dcaa5;margin-left:8px;font-weight:500;">Solo mesa</span>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Fecha y hora de programación <span class="mesa-badge">Mesa</span></label>
-            <input type="datetime-local" name="fecha_programacion" class="form-input"
-                   value="{{ $venta->fecha_programacion ? $venta->fecha_programacion->format('Y-m-d\TH:i') : '' }}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Fecha de instalación <span class="mesa-badge">Mesa</span></label>
-            <input type="date" name="fecha_instalacion" class="form-input"
-                   value="{{ $venta->fecha_instalacion ? $venta->fecha_instalacion->format('Y-m-d') : '' }}">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">N° SOT <span class="mesa-badge">Mesa</span></label>
-            <input type="text" name="nro_sot_fija" class="form-input"
-                   value="{{ $venta->nro_sot_fija }}" placeholder="N° SOT">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Proyecto <span class="mesa-badge">Mesa</span></label>
-            <input type="text" name="proyecto_fija" class="form-input"
-                   value="{{ $venta->proyecto_fija }}" placeholder="Proyecto">
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Pedido <span class="mesa-badge">Mesa</span></label>
-          <input type="text" name="pedido_fija" class="form-input"
-                 value="{{ $venta->pedido_fija }}" placeholder="N° de pedido">
-        </div>
       </div>
     </div>
     @endif
@@ -554,28 +520,8 @@
         </table>
         @endif
 
-        <div class="section-title">
-          Campos de Mesa de Control
-          <span style="font-size:10px;padding:1px 7px;border-radius:10px;background:rgba(29,158,117,0.15);color:#5dcaa5;margin-left:8px;font-weight:500;">Solo mesa</span>
-        </div>
+        
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Fecha de activación <span class="mesa-badge">Mesa</span></label>
-            <input type="date" name="fecha_activacion" class="form-input"
-                   value="{{ $venta->fecha_activacion ? $venta->fecha_activacion->format('Y-m-d') : '' }}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Descuentos <span class="mesa-badge">Mesa</span></label>
-            <input type="text" name="descuentos_mesa_movil" class="form-input"
-                   value="{{ $venta->descuentos_mesa_movil }}" placeholder="Descuentos aplicados">
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Pedido <span class="mesa-badge">Mesa</span></label>
-          <input type="text" name="pedido_movil" class="form-input"
-                 value="{{ $venta->pedido_movil }}" placeholder="N° de pedido">
-        </div>
       </div>
     </div>
     @endif

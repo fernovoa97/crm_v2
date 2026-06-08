@@ -139,6 +139,33 @@
   html.light .table-top span { color: #0f0f13; }
   html.light th { color: rgba(0,0,0,0.35); border-bottom-color: #e8f3fb; }
   html.light td { color: rgba(0,0,0,0.7); border-bottom-color: #f0f7ff; }
+
+  .btn-crear-venta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(29,158,117,0.12);
+  color: #5dcaa5;
+  border: 1px solid rgba(29,158,117,0.25);
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all .2s;
+  font-family: 'Sora', sans-serif;
+}
+
+.btn-crear-venta:hover {
+  background: rgba(29,158,117,0.18);
+  transform: translateY(-1px);
+}
+
+/* Light mode */
+html.light .btn-crear-venta {
+  background: rgba(29,158,117,0.08);
+  border-color: rgba(29,158,117,0.2);
+}
 </style>
 
 @php
@@ -187,8 +214,12 @@
 {{-- Tabla --}}
 <div class="table-card">
   <div class="table-top">
-    <span>Mis ventas</span>
-  </div>
+  <span>Mis ventas</span>
+
+  <a href="{{ route('asesor.ventas.create-directo') }}" class="btn-crear-venta">
+    + Crear venta desde cero
+  </a>
+</div>
 
   <table>
     <thead>

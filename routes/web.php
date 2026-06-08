@@ -28,7 +28,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('cacs', [CacController::class, 'index'])->name('cacs.index');
 });
 
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'es_jerarquia'])->prefix('admin')->name('admin.')->group(function () {
     // CACs — búsqueda usada por asesores al crear venta (solo requiere auth, no admin)
     Route::get('cacs/search', [CacController::class, 'search'])->name('cacs.search');
 
@@ -55,7 +55,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 });
 
 // Rutas del asesor
-Route::middleware(['auth'])->prefix('asesor')->name('asesor.')->group(function () {
+Route::middleware(['auth', 'es_asesor'])->prefix('asesor')->name('asesor.')->group(function () {
     Route::get('leads', [LeadController::class, 'asesor'])->name('leads.index');
     Route::post('leads/tipificar', [LeadController::class, 'tipificar'])->name('leads.tipificar');
 
@@ -73,7 +73,7 @@ Route::middleware(['auth'])->prefix('asesor')->name('asesor.')->group(function (
 });
 
 // Rutas de mesa de control
-Route::middleware(['auth'])->prefix('mesa')->name('mesa.')->group(function () {
+Route::middleware(['auth', 'es_mesa'])->prefix('mesa')->name('mesa.')->group(function () {
     Route::get('ventas', [VentaController::class, 'mesaIndex'])->name('ventas.index');
     Route::get('ventas/{venta}', [VentaController::class, 'mesaShow'])->name('ventas.show');
     Route::patch('ventas/{venta}', [VentaController::class, 'mesaUpdate'])->name('ventas.update');

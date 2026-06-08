@@ -158,17 +158,15 @@ public function importWrongNumber(Request $request)
         $totalAsignado = 0;
 
         foreach ($userIds as $i => $userId) {
-            $qty = (int) $userQtys[$i];
-            $subset = $leads->slice($index, $qty);
+    $qty = (int) $userQtys[$i];
+    $subset = $leads->slice($index, $qty);
 
-            foreach ($subset as $lead) {
-                $lead->assigned_to = $userId;
-                $lead->save();
-            }
+    Lead::whereIn('id', $subset->pluck('id'))
+        ->update(['assigned_to' => $userId]);
 
-            $index += $qty;
-            $totalAsignado += $subset->count();
-        }
+    $index += $qty;
+    $totalAsignado += $subset->count();
+}
 
         return back()->with('success', "{$totalAsignado} leads asignados correctamente.");
     }

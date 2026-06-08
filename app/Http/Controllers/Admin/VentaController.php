@@ -288,6 +288,29 @@ class VentaController extends Controller
             return back()->with('error', 'No tienes permiso.');
         }
 
+        $request->validate([
+            'estado'               => 'nullable|in:enviada,en_proceso,completada,rechazada',
+            'estado_contrato'      => 'nullable|in:pendiente_loteo,pendiente_sigex,conforme,no_conforme',
+            'motivo_rechazo'       => 'nullable|string|max:500',
+            'correo'               => 'nullable|email',
+            'tipo_documento'       => 'nullable|in:dni,ce',
+            'tecnologia'           => 'nullable|in:hfc,ftth',
+            'tipo_producto_fija'   => 'nullable|in:1play,2play,3play',
+            'tipo_venta_fija'      => 'nullable|in:alta,porta',
+            'tipo_venta_movil'     => 'nullable|in:alta,porta,renovacion',
+            'tipo_entrega'         => 'nullable|in:delivery,recojo_cac',
+            'campana_movil'        => 'nullable|in:claro_negocios,claro_emprendedor',
+            'fecha_programacion'   => 'nullable|date',
+            'fecha_instalacion'    => 'nullable|date',
+            'fecha_despacho'       => 'nullable|date',
+            'fecha_activacion'     => 'nullable|date',
+            'precio_servicio'      => 'nullable|numeric|min:0',
+            'cantidad_decos'       => 'nullable|integer|min:0',
+            'cantidad_repetidores' => 'nullable|integer|min:0',
+            'rango_horario'        => 'nullable|in:sla_3h,9-11,11-1,2-4,4-6',
+            'tipo_ingreso'         => 'nullable|in:pdv,centralizado,almacen_propio',
+        ]);
+
         $venta->update($request->only([
             'estado_contrato', 'estado', 'motivo_rechazo',
             'mesa_control_id',

@@ -28,10 +28,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('cacs', [CacController::class, 'index'])->name('cacs.index');
 });
 
-Route::middleware(['auth', 'es_jerarquia'])->prefix('admin')->name('admin.')->group(function () {
-    // CACs — búsqueda usada por asesores al crear venta (solo requiere auth, no admin)
+// Rutas compartidas — accesibles para asesores
+Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     Route::get('cacs/search', [CacController::class, 'search'])->name('cacs.search');
+});
 
+Route::middleware(['auth', 'es_jerarquia'])->prefix('admin')->name('admin.')->group(function () {
     // 1. RUTAS DE ACCIÓN PRIMERO (Sin parámetros)
     Route::post('leads/assign', [LeadController::class, 'assign'])->name('leads.assign');
     Route::post('leads/import', [LeadController::class, 'import'])->name('leads.import');

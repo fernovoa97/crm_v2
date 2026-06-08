@@ -417,26 +417,63 @@ html.light .linea-input, html.light .linea-select {
   color: rgba(255,80,80,0.4); cursor: pointer; font-size: 16px;
 }
 
+.wcard,
+.wcard-body,
+.fgroup {
+  overflow: visible !important;
+}
+
 /* ── CAC DROPDOWN ───────────────────────────────────── */
 .cac-drop {
-  position: absolute; z-index: 200;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+
+  z-index: 99999;
+
   background: #1c1c26;
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: var(--radius-md);
-  margin-top: 4px; max-height: 200px;
-  overflow-y: auto; min-width: 280px;
+
+  max-height: 220px;
+  overflow-y: auto;
+  overflow-x: hidden;
+
   box-shadow: 0 8px 32px rgba(0,0,0,0.4);
 }
-html.light .cac-drop { background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+
+html.light .cac-drop {
+  background: #fff;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
 
 .cac-opt {
-  padding: 10px 14px; cursor: pointer;
-  border-bottom: 1px solid var(--border2); transition: background .15s;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border2);
+  transition: background .15s;
 }
-.cac-opt:last-child { border-bottom: none; }
-.cac-opt:hover { background: var(--accent-dim); }
-.cac-opt-name { font-size: 13px; color: var(--text); font-weight: 600; }
-.cac-opt-dir  { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+.cac-opt:last-child {
+  border-bottom: none;
+}
+
+.cac-opt:hover {
+  background: var(--accent-dim);
+}
+
+.cac-opt-name {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.cac-opt-dir {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
 
 /* ── SIDEBAR PANEL ──────────────────────────────────── */
 .side-panel {
@@ -1431,6 +1468,7 @@ function seleccionarCac(cac) {
   document.getElementById('inputCacDireccion').value = cac.direccion;
   document.getElementById('grupoCacSeleccionado').style.display = 'block';
   document.getElementById('cacDropdown').style.display = 'none';
+  document.querySelector('input[name="direccion_facturacion_movil"]').value = cac.direccion;
 }
 document.addEventListener('click', e => {
   if (!e.target.closest('#inputCacBusqueda') && !e.target.closest('#cacDropdown'))

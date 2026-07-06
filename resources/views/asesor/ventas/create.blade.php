@@ -649,6 +649,7 @@ html.light .cac-drop {
     type="text"
     name="ruc"
     id="rucEmpresa"
+    class="finput"
     value="{{ old('ruc', $lead->ruc) }}"
     required
 >
@@ -660,6 +661,7 @@ html.light .cac-drop {
     type="text"
     name="razon_social"
     id="razonEmpresa"
+    class="finput"
     value="{{ old('razon_social', $lead->razon_social) }}"
     required
 >

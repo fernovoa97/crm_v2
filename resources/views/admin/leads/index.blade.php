@@ -74,11 +74,11 @@
 
 @section('content')
 <style>
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 12px;
-    margin-bottom: 24px;
+  .stats-row{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+      gap:12px;
+      margin-bottom:24px;
   }
 
   .stat-card {
@@ -303,43 +303,81 @@
 @endphp
 
 {{-- 1. Stats Row --}}
-<div class="stats-row">
+<div class="stats-row" style="grid-template-columns:repeat(9,1fr);">
+
   <div class="stat-card">
-    <div class="stat-label">Total leads</div>
-    <div class="stat-value">{{ $leads->total() }}</div>
-    <div class="stat-badge" style="background:rgba(47,202,245,0.1);color:#2FCAF5;">En base</div>
+    <div class="stat-label">Total Leads</div>
+    <div class="stat-value">{{ $stats['total'] }}</div>
+    <div class="stat-badge" style="background:rgba(47,202,245,.10);color:#2FCAF5;">
+      En base
+    </div>
   </div>
-<div class="stat-card">
-  <div class="stat-label">Sin asignar</div>
-  <div class="stat-value">{{ $leads->getCollection()->whereNull('assigned_to')->count() }}</div>
-  <div class="stat-badge" style="background:rgba(47,202,245,0.1);color:#2FCAF5;">En esta página</div>
-</div>
-  
+
   <div class="stat-card">
-    <div class="stat-label">Pendientes de tipifiación</div>
-    <div class="stat-value">{{ $currentPageLeads->where('tipificacion','pendiente')->count() }}</div>
-    <div class="stat-badge" style="background:rgba(136,135,128,0.15);color:#b4b2a9;">En esta página</div>
+    <div class="stat-label">Sin asignar</div>
+    <div class="stat-value">{{ $stats['sin_asignar'] }}</div>
+    <div class="stat-badge" style="background:rgba(47,202,245,.10);color:#2FCAF5;">
+      En base
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Pendiente</div>
+    <div class="stat-value">{{ $stats['pendiente'] }}</div>
+    <div class="stat-badge" style="background:rgba(136,135,128,.15);color:#b4b2a9;">
+      En base
+    </div>
   </div>
 
   <div class="stat-card">
     <div class="stat-label">Prospectos</div>
-    <div class="stat-value">{{ $currentPageLeads->where('tipificacion','prospecto')->count() }}</div>
-    <div class="stat-badge" style="background:rgba(47,202,245,0.12);color:#2FCAF5;">En esta página</div>
+    <div class="stat-value">{{ $stats['prospecto'] }}</div>
+    <div class="stat-badge" style="background:rgba(47,202,245,.12);color:#2FCAF5;">
+      En base
+    </div>
   </div>
 
   <div class="stat-card">
     <div class="stat-label">Volver a llamar</div>
-    <div class="stat-value">{{ $currentPageLeads->where('tipificacion','volver_llamar')->count() }}</div>
-    <div class="stat-badge" style="background:rgba(239,159,39,0.15);color:#fac775;">En esta página</div>
+    <div class="stat-value">{{ $stats['volver_llamar'] }}</div>
+    <div class="stat-badge" style="background:rgba(239,159,39,.15);color:#fac775;">
+      En base
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">No interesados</div>
+    <div class="stat-value">{{ $stats['no_interesado'] }}</div>
+    <div class="stat-badge" style="background:rgba(216,90,48,.15);color:#f0997b;">
+      En base
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">No califica</div>
+    <div class="stat-value">{{ $stats['no_califica'] }}</div>
+    <div class="stat-badge" style="background:rgba(162,45,45,.15);color:#f09595;">
+      En base
+    </div>
   </div>
 
   <div class="stat-card">
     <div class="stat-label">Lista negra</div>
-    <div class="stat-value">{{ $currentPageLeads->where('tipificacion','lista_negra')->count() }}</div>
-    <div class="stat-badge" style="background:rgba(50,50,60,0.5);color:rgba(255,255,255,0.3);">En esta página</div>
+    <div class="stat-value">{{ $stats['lista_negra'] }}</div>
+    <div class="stat-badge" style="background:rgba(50,50,60,.50);color:rgba(255,255,255,.35);">
+      En base
+    </div>
   </div>
-</div>
 
+  <div class="stat-card">
+    <div class="stat-label">N° equivocados</div>
+    <div class="stat-value">{{ $stats['numero_equivocado'] }}</div>
+    <div class="stat-badge" style="background:rgba(127,119,221,.15);color:#afa9ec;">
+      En base
+    </div>
+  </div>
+
+</div>
 {{-- 2. Tabla --}}
 <div class="table-card">
   <div class="table-top">

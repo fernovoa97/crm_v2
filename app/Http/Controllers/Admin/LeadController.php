@@ -43,7 +43,7 @@ public function importWrongNumber(Request $request)
     return redirect()->route('admin.leads.index')->with('success', $msg);
 }
 
-    public function index()
+public function index()
 {
     $user  = auth()->user();
     $query = Lead::with('assignedTo');
@@ -54,40 +54,72 @@ public function importWrongNumber(Request $request)
             ->where('status', 'activo')
             ->orderBy('name')
             ->get(['id', 'name', 'role']);
+
     } elseif ($user->isJefe()) {
+
         $supervisorIds = $user->subordinates()->pluck('id');
         $asesorIds     = User::whereIn('supervisor_id', $supervisorIds)->pluck('id');
         $ids           = collect([$user->id])->merge($supervisorIds)->merge($asesorIds);
-        
+
         $query->whereIn('assigned_to', $ids);
+
         $availableUsers = User::whereIn('id', $supervisorIds->merge($asesorIds))
             ->where('status', 'activo')
             ->orderBy('name')
             ->get(['id', 'name', 'role']);
+
     } elseif ($user->isSupervisor()) {
+
         $asesorIds = $user->subordinates()->pluck('id');
         $ids       = collect([$user->id])->merge($asesorIds);
-        
+
         $query->whereIn('assigned_to', $ids);
+
         $availableUsers = $user->subordinates()
             ->where('status', 'activo')
             ->orderBy('name')
             ->get(['id', 'name', 'role']);
+
     } else {
+
         $query->where('assigned_to', $user->id);
         $availableUsers = collect();
     }
 
     $leads = $query->orderBy('created_at', 'desc')->paginate(50);
 
-    // Conteo dentro del scope del usuario, no global
-    $wrongNumberCount = Lead::where('tipificacion', 'numero_equivocado')
-        ->when(!$user->isAdmin(), function ($q) use ($ids) {
-            $q->whereIn('assigned_to', $ids);
-        })
-        ->count();
+    /*
+    |--------------------------------------------------------------------------
+    | Estadísticas globales
+    |--------------------------------------------------------------------------
+    */
 
-    return view('admin.leads.index', compact('leads', 'availableUsers', 'wrongNumberCount'));
+    $stats = [
+        'total'             => Lead::count(),
+        'sin_asignar'       => Lead::whereNull('assigned_to')->count(),
+        'pendiente'         => Lead::where('tipificacion', 'pendiente')->count(),
+        'prospecto'         => Lead::where('tipificacion', 'prospecto')->count(),
+        'volver_llamar'     => Lead::where('tipificacion', 'volver_llamar')->count(),
+        'no_interesado'     => Lead::where('tipificacion', 'no_interesado')->count(),
+        'no_califica'       => Lead::where('tipificacion', 'no_califica')->count(),
+        'lista_negra'       => Lead::where('tipificacion', 'lista_negra')->count(),
+        'numero_equivocado' => Lead::where('tipificacion', 'numero_equivocado')->count(),
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Botón Exportar Números Equivocados
+    |--------------------------------------------------------------------------
+    */
+
+    $wrongNumberCount = $stats['numero_equivocado'];
+
+    return view('admin.leads.index', compact(
+        'leads',
+        'availableUsers',
+        'wrongNumberCount',
+        'stats'
+    ));
 }
     public function import(Request $request)
     {

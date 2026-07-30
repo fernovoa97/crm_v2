@@ -11,7 +11,6 @@
 </script>
   <title>{{ config('app.name', 'CRM') }}</title>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600&display=swap" rel="stylesheet"/>
-  @vite(['resources/css/app.css', 'resources/js/app.js'])
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -218,7 +217,7 @@ html.light .alert-error { background: rgba(255,80,80,0.08); border-color: rgba(2
 <div class="sidebar">
   <div class="sidebar-logo">
     <div class="logo-box">
-      <img src="/images/logo.jpg" alt="Logo"/>
+      <img src="{{ asset('images/logo.jpg') }}" alt="Logo"/>
     </div>
     <span>{{ config('app.name', 'CRM') }}</span>
   </div>

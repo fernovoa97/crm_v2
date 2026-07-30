@@ -648,6 +648,7 @@ html.light .cac-drop {
                 <input
     type="text"
     name="ruc"
+    maxlength="11"
     id="rucEmpresa"
     class="finput"
     value="{{ old('ruc', $lead->ruc) }}"
@@ -670,60 +671,25 @@ html.light .cac-drop {
 
         <div class="frow">
             <div class="fgroup">
-                <label class="flabel">Representante <span class="req">*</span></label>
-                <input
-                    type="text"
-                    name="nombre_representante"
-                    class="finput"
-                    value="{{ old('nombre_representante', $lead->nombre_rl) }}"
-                    required
-                >
-            </div>
-
-            <div class="fgroup">
-                <label class="flabel">Teléfono <span class="req">*</span></label>
-                <input
-                    type="text"
-                    name="telefono_representante"
-                    class="finput"
-                    value="{{ old('telefono_representante', $lead->telf1) }}"
-                    required
-                >
-            </div>
-        </div>
-
-        <div class="frow">
-            <div class="fgroup">
-                <label class="flabel">Correo <span class="req">*</span></label>
-                <input
-                    type="email"
-                    name="correo"
-                    class="finput"
-                    value="{{ old('correo', $lead->correo_rl) }}"
-                    required
-                >
-            </div>
-
-            <div class="fgroup">
                 <label class="flabel">Segmento</label>
                 <select name="segmento" class="finput">
                     <option value="">— Seleccionar —</option>
-                    <option value="Microempresa">Microempresa</option>
-                    <option value="Pyme">Pyme</option>
-                    <option value="Mayores">Mayores</option>
-                    <option value="otros">otros</option>
+                    <option value="Microempresa" {{ old('segmento') === 'Microempresa' ? 'selected' : '' }}>Microempresa</option>
+                    <option value="Pyme" {{ old('segmento') === 'Pyme' ? 'selected' : '' }}>Pyme</option>
+                    <option value="Mayores" {{ old('segmento') === 'Mayores' ? 'selected' : '' }}>Mayores</option>
+                    <option value="otros" {{ old('segmento') === 'otros' ? 'selected' : '' }}>otros</option>
                 </select>
             </div>
-        </div>
 
-        <div class="fgroup" style="margin-top:12px;">
-            <label class="flabel">Departamento</label>
-            <input
-                type="text"
-                name="departamento"
-                class="finput"
-                value="{{ old('departamento') }}"
-            >
+            <div class="fgroup">
+                <label class="flabel">Departamento</label>
+                <input
+                    type="text"
+                    name="departamento"
+                    class="finput"
+                    value="{{ old('departamento') }}"
+                >
+            </div>
         </div>
 
         <div class="fgroup" style="margin-top:16px;">
@@ -740,7 +706,7 @@ html.light .cac-drop {
             type="checkbox"
             name="guardar_como_lead"
             value="1"
-            checked
+            {{ old('guardar_como_lead', true) ? 'checked' : '' }}
             style="
                 width:16px;
                 height:16px;
@@ -836,7 +802,7 @@ html.light .cac-drop {
             </div>
             <div class="fgroup">
               <label class="flabel">Teléfono fijo a migrar <span class="req">*</span></label>
-              <input type="text" name="telefono_fijo_migrar" class="finput" placeholder="01 XXXXXXX">
+              <input type="text" name="telefono_fijo_migrar" class="finput" value="{{ old('telefono_fijo_migrar') }}" placeholder="01 XXXXXXX">
             </div>
           </div>
         </div>
@@ -888,7 +854,7 @@ html.light .cac-drop {
             <span class="hint" id="hintBiometria" style="display:none;">👆 Quien pasará la biometría</span>
           </label>
           <input type="text" name="nombre_representante" class="finput"
-                 value="{{ $lead->nombre_rl }}" placeholder="Nombre completo">
+                 value="{{ old('nombre_representante', $lead->nombre_rl) }}" placeholder="Nombre completo">
         </div>
 
         <div class="frow">
@@ -903,7 +869,7 @@ html.light .cac-drop {
           <div class="fgroup">
             <label class="flabel">N° de documento <span class="req">*</span></label>
             <input type="text" name="nro_documento" id="inputNroDoc" class="finput"
-                   maxlength="8" placeholder="8 dígitos">
+                   value="{{ old('nro_documento') }}" maxlength="8" placeholder="8 dígitos">
           </div>
         </div>
 
@@ -911,22 +877,22 @@ html.light .cac-drop {
           <div class="fgroup">
             <label class="flabel">Teléfono del representante <span class="req">*</span></label>
             <input type="text" name="telefono_representante" class="finput"
-                   value="{{ $lead->telf1 }}" placeholder="9XX XXX XXX">
+                   value="{{ old('telefono_representante', $lead->telf1) }}" placeholder="9XX XXX XXX">
           </div>
           <div class="fgroup" id="grupoTelfSot" style="display:none;">
             <label class="flabel">Teléfono para SOT <span class="hint">(técnico)</span></label>
-            <input type="text" name="telefono_sot" class="finput" placeholder="9XX XXX XXX">
+            <input type="text" name="telefono_sot" class="finput" value="{{ old('telefono_sot') }}" placeholder="9XX XXX XXX">
           </div>
           <div class="fgroup" id="grupoTelfBiometria" style="display:none;">
             <label class="flabel">Teléfono motorizado de delivery</label>
-            <input type="text" name="telefono_referencia_movil" class="finput" placeholder="9XX XXX XXX">
+            <input type="text" name="telefono_referencia_movil" class="finput" value="{{ old('telefono_referencia_movil') }}" placeholder="9XX XXX XXX">
           </div>
         </div>
 
         <div class="fgroup">
           <label class="flabel">Correo electrónico <span class="req">*</span></label>
           <input type="email" name="correo" class="finput"
-                 value="{{ $lead->correo_rl }}" placeholder="correo@empresa.com">
+                 value="{{ old('correo', $lead->correo_rl) }}" placeholder="correo@empresa.com">
         </div>
 
       </div>
@@ -943,27 +909,27 @@ html.light .cac-drop {
         <div class="frow">
           <div class="fgroup">
             <label class="flabel">Coordenadas de cobertura <span class="hint">(factibilidad)</span></label>
-            <input type="text" name="coordenadas_cobertura" class="finput" placeholder="-12.0464, -77.0428">
+            <input type="text" name="coordenadas_cobertura" class="finput" value="{{ old('coordenadas_cobertura') }}" placeholder="-12.0464, -77.0428">
           </div>
           <div class="fgroup">
             <label class="flabel">Plano de cobertura <span class="hint">(factibilidad)</span></label>
-            <input type="text" name="plano_cobertura" class="finput" placeholder="URL o referencia">
+            <input type="text" name="plano_cobertura" class="finput" value="{{ old('plano_cobertura') }}" placeholder="URL o referencia">
           </div>
         </div>
 
         <div class="fgroup">
           <label class="flabel">Dirección de instalación <span class="req">*</span></label>
-          <input type="text" name="direccion_instalacion" class="finput" placeholder="Av. / Jr. / Calle...">
+          <input type="text" name="direccion_instalacion" class="finput" value="{{ old('direccion_instalacion') }}" placeholder="Av. / Jr. / Calle...">
         </div>
 
         <div class="frow">
           <div class="fgroup">
             <label class="flabel">Referencia de dirección</label>
-            <input type="text" name="referencia_direccion_instalacion" class="finput" placeholder="Cerca a...">
+            <input type="text" name="referencia_direccion_instalacion" class="finput" value="{{ old('referencia_direccion_instalacion') }}" placeholder="Cerca a...">
           </div>
           <div class="fgroup">
             <label class="flabel">Dirección de facturación</label>
-            <input type="text" name="direccion_facturacion_fija" class="finput" placeholder="Si difiere de instalación">
+            <input type="text" name="direccion_facturacion_fija" class="finput" value="{{ old('direccion_facturacion_fija') }}" placeholder="Si difiere de instalación">
           </div>
         </div>
 
@@ -1023,11 +989,11 @@ html.light .cac-drop {
         <div class="frow">
           <div class="fgroup">
             <label class="flabel">Cantidad de DECOs</label>
-            <input type="number" name="cantidad_decos" class="finput" min="0" value="0">
+            <input type="number" name="cantidad_decos" class="finput" min="0" value="{{ old('cantidad_decos', 0) }}">
           </div>
           <div class="fgroup">
             <label class="flabel">Cantidad de repetidores</label>
-            <input type="number" name="cantidad_repetidores" class="finput" min="0" value="0">
+            <input type="number" name="cantidad_repetidores" class="finput" min="0" value="{{ old('cantidad_repetidores', 0) }}">
           </div>
         </div>
 
@@ -1036,11 +1002,11 @@ html.light .cac-drop {
         <div class="frow">
           <div class="fgroup">
             <label class="flabel">Bono</label>
-            <input type="text" name="bono_fija" class="finput" placeholder="Descripción del bono">
+            <input type="text" name="bono_fija" class="finput" value="{{ old('bono_fija') }}" placeholder="Descripción del bono">
           </div>
           <div class="fgroup">
             <label class="flabel">Descuento</label>
-            <input type="text" name="descuento_fija" class="finput" placeholder="Descripción del descuento">
+            <input type="text" name="descuento_fija" class="finput" value="{{ old('descuento_fija') }}" placeholder="Descripción del descuento">
           </div>
         </div>
 
@@ -1055,7 +1021,7 @@ html.light .cac-drop {
 
         <div class="fgroup field-fullclaro" id="grupoFullClaro">
           <label class="flabel">N° móvil Full Claro <span class="hint">(opcional)</span></label>
-          <input type="text" name="nro_movil_fullclaro" class="finput" placeholder="9XX XXX XXX">
+          <input type="text" name="nro_movil_fullclaro" class="finput" value="{{ old('nro_movil_fullclaro') }}" placeholder="9XX XXX XXX">
         </div>
 
       </div>
@@ -1076,7 +1042,7 @@ html.light .cac-drop {
             <div class="bubble" onclick="setBubble(this,'tipo_entrega','recojo_cac'); onTipoEntregaChange('recojo_cac')">Recojo en CAC</div>
           </div>
           <input type="hidden" name="tipo_entrega" id="inputTipoEntrega">
-          <input type="hidden" name="cac_id"        id="inputCacId">
+          <input type="hidden" name="cac_id"        id="inputCacId" value="{{ old('cac_id') }}">
         </div>
 
         {{-- DELIVERY --}}
@@ -1090,27 +1056,27 @@ html.light .cac-drop {
                 <input type="text" id="inputGeoY" class="finput" placeholder="Lng: -77.0428"
                        oninput="syncGeodirCoords()">
               </div>
-              <input type="hidden" name="coordenadas_geodir" id="inputCoordsGeodirFinal">
+              <input type="hidden" name="coordenadas_geodir" id="inputCoordsGeodirFinal" value="{{ old('coordenadas_geodir') }}">
             </div>
             <div class="fgroup">
               <label class="flabel">Plano de entrega</label>
-              <input type="text" name="plano_geodir" class="finput" placeholder="URL o referencia">
+              <input type="text" name="plano_geodir" class="finput" value="{{ old('plano_geodir') }}" placeholder="URL o referencia">
             </div>
           </div>
 
           <div class="fgroup">
             <label class="flabel">Dirección de entrega <span class="req">*</span></label>
-            <input type="text" name="direccion_entrega" class="finput" placeholder="Av. / Jr. / Calle...">
+            <input type="text" name="direccion_entrega" class="finput" value="{{ old('direccion_entrega') }}" placeholder="Av. / Jr. / Calle...">
           </div>
 
           <div class="frow">
             <div class="fgroup">
               <label class="flabel">Referencia del punto</label>
-              <input type="text" name="referencias_entrega" class="finput" placeholder="Cerca a...">
+              <input type="text" name="referencias_entrega" class="finput" value="{{ old('referencias_entrega') }}" placeholder="Cerca a...">
             </div>
             <div class="fgroup">
               <label class="flabel">Dirección de facturación</label>
-              <input type="text" name="direccion_facturacion_movil" class="finput" placeholder="Si difiere">
+              <input type="text" name="direccion_facturacion_movil" class="finput" value="{{ old('direccion_facturacion_movil') }}" placeholder="Si difiere">
             </div>
           </div>
         </div>
@@ -1155,7 +1121,7 @@ html.light .cac-drop {
         <div class="frow">
           <div class="fgroup">
             <label class="flabel">Fecha de despacho <span class="req">*</span></label>
-            <input type="date" name="fecha_despacho" class="finput" id="inputFechaDespacho">
+            <input type="date" name="fecha_despacho" class="finput" id="inputFechaDespacho" value="{{ old('fecha_despacho') }}">
           </div>
           <div class="fgroup">
             <label class="flabel">Rango horario <span class="req">*</span></label>
@@ -1172,7 +1138,7 @@ html.light .cac-drop {
 
         <div class="fgroup">
           <label class="flabel">Comentario de despacho <span class="hint">casos solo SEC u observaciones</span></label>
-          <input type="text" name="comentario_despacho" class="finput" placeholder="Ej: Solo SEC, coordinar con...">
+          <input type="text" name="comentario_despacho" class="finput" value="{{ old('comentario_despacho') }}" placeholder="Ej: Solo SEC, coordinar con...">
         </div>
 
         <div class="fsep">Líneas solicitadas</div>
@@ -1198,7 +1164,7 @@ html.light .cac-drop {
         <div id="grupoLarge" style="display:none; margin-top:14px;">
           <div class="fgroup">
             <label class="flabel">Large asociada <span class="hint">(alta nueva)</span></label>
-            <input type="text" name="large_asociada" class="finput" placeholder="N° serie">
+            <input type="text" name="large_asociada" class="finput" value="{{ old('large_asociada') }}" placeholder="N° serie">
           </div>
         </div>
 
@@ -1229,6 +1195,9 @@ html.light .cac-drop {
                  style="display:none">
         </div>
         <div class="doc-list" id="docList"></div>
+        <div id="docsRestoreNotice" style="display:none;margin-top:10px;padding:10px 14px;background:var(--orange-dim);border:1px solid rgba(250,199,117,0.25);border-radius:var(--radius-sm);font-size:12px;color:var(--orange);line-height:1.5;">
+          ⚠️ Por seguridad, el navegador no puede volver a adjuntar automáticamente los archivos que habías seleccionado antes de este error. Por favor, vuelve a adjuntarlos.
+        </div>
       </div>
     </div>
 
@@ -1303,6 +1272,10 @@ html.light .cac-drop {
 </form>
 
 <script>
+// ── DATOS ANTIGUOS (old()) PARA RESTAURAR TRAS UN ERROR DEL SERVIDOR ──
+const OLD_DATA = @json(old());
+const HAS_SERVER_ERRORS = @json($errors->any());
+
 // ── ESTADO ─────────────────────────────────────────
 let tipoActual = null;
 
@@ -1341,40 +1314,42 @@ function setTipo(tipo) {
   document.getElementById('alertBiometria').style.display = tipo === 'movil' ? 'block' : 'none';
   document.getElementById('hintBiometria').style.display  = tipo === 'movil' ? 'inline' : 'none';
 
-  // Defaults por tipo
-  if (tipo === 'fija') {
-    const pdv = document.querySelector('.bubble[onclick*="tipo_ingreso"][onclick*="pdv"]');
-    if (pdv) setBubble(pdv, 'tipo_ingreso', 'pdv');
-    const alta = document.querySelector('#grupoTipoVentaFija .bubble[onclick*="alta"]');
-    if (alta) { setBubble(alta, 'tipo_venta_fija', 'alta'); togglePortaFija(false); }
-    setTimeout(() => {
-      const ftth = document.querySelector('.bubble[onclick*="ftth"]');
-      if (ftth && !ftth.classList.contains('active')) setBubble(ftth, 'tecnologia', 'ftth');
-      const sol = document.querySelector('.bubble[onclick*="1_sol"]');
-      if (sol && !sol.classList.contains('active')) setBubble(sol, 'campana_fija', '1_sol');
-    }, 50);
-  }
+  // Defaults por tipo (solo si no estamos restaurando un envío previo)
+  if (!HAS_SERVER_ERRORS) {
+    if (tipo === 'fija') {
+      const pdv = document.querySelector('.bubble[onclick*="tipo_ingreso"][onclick*="pdv"]');
+      if (pdv) setBubble(pdv, 'tipo_ingreso', 'pdv');
+      const alta = document.querySelector('#grupoTipoVentaFija .bubble[onclick*="alta"]');
+      if (alta) { setBubble(alta, 'tipo_venta_fija', 'alta'); togglePortaFija(false); }
+      setTimeout(() => {
+        const ftth = document.querySelector('.bubble[onclick*="ftth"]');
+        if (ftth && !ftth.classList.contains('active')) setBubble(ftth, 'tecnologia', 'ftth');
+        const sol = document.querySelector('.bubble[onclick*="1_sol"]');
+        if (sol && !sol.classList.contains('active')) setBubble(sol, 'campana_fija', '1_sol');
+      }, 50);
+    }
 
-  if (tipo === 'movil') {
-    const pdv = document.querySelector('.bubble[onclick*="tipo_ingreso"][onclick*="pdv"]');
-    if (pdv) setBubble(pdv, 'tipo_ingreso', 'pdv');
-    onTipoIngresoChange('pdv');
-    const hoy = new Date().toISOString().split('T')[0];
-    document.getElementById('inputFechaDespacho').value = hoy;
-    const sla = document.getElementById('bubbleSla3h');
-    if (sla && !sla.classList.contains('active')) setBubble(sla, 'rango_horario', 'sla_3h');
-    setTimeout(() => {
-      const porta = document.querySelector('#grupoTipoVentaMovil .bubble[onclick*="porta"]');
-      if (porta) { setBubble(porta, 'tipo_venta_movil', 'porta'); togglePortaMovil('porta'); }
-      if (document.getElementById('lineasBody').children.length === 0) addLinea();
-    }, 50);
+    if (tipo === 'movil') {
+      const pdv = document.querySelector('.bubble[onclick*="tipo_ingreso"][onclick*="pdv"]');
+      if (pdv) setBubble(pdv, 'tipo_ingreso', 'pdv');
+      onTipoIngresoChange('pdv');
+      const hoy = new Date().toISOString().split('T')[0];
+      document.getElementById('inputFechaDespacho').value = hoy;
+      const sla = document.getElementById('bubbleSla3h');
+      if (sla && !sla.classList.contains('active')) setBubble(sla, 'rango_horario', 'sla_3h');
+      setTimeout(() => {
+        const porta = document.querySelector('#grupoTipoVentaMovil .bubble[onclick*="porta"]');
+        if (porta) { setBubble(porta, 'tipo_venta_movil', 'porta'); togglePortaMovil('porta'); }
+        if (document.getElementById('lineasBody').children.length === 0) addLinea();
+      }, 50);
+    }
   }
 
   updateProgress();
   checkSubmit();
 
   // Scroll suave al paso 2
-  setTimeout(() => scrollToCard('c2'), 100);
+  if (!HAS_SERVER_ERRORS) setTimeout(() => scrollToCard('c2'), 100);
 }
 
 // ── BUBBLES ─────────────────────────────────────────
@@ -1501,6 +1476,16 @@ const PLANES = {
   ],
 };
 
+// Mapa id-de-hidden -> name-del-campo, para poder restaurar desde OLD_DATA
+const PLAN_FIELD_BY_ID = {
+  hPlanTelefonia:    'plan_telefonia',
+  hPlanCableStandar: 'plan_cable_standar',
+  hPlanCableSup:     'plan_cable_superior',
+  hPlanInt200:       'plan_internet_200',
+  hPlanInt400:       'plan_internet_400',
+  hPlanInt1500:      'plan_internet_1500',
+};
+
 function resetPlanHiddens() {
   ['hPlanTelefonia','hPlanCableStandar','hPlanCableSup',
    'hPlanInt200','hPlanInt400','hPlanInt1500'].forEach(id => {
@@ -1521,7 +1506,7 @@ function buildComboSelect(label, opciones, idx, required) {
     </div>`;
 }
 
-function renderCombosPlay(play) {
+function renderCombosPlay(play, presetFields) {
   const container = document.getElementById('combosPlayContainer');
   const grupo     = document.getElementById('grupoCombosPlay');
   const hint      = document.getElementById('hintPlay');
@@ -1548,6 +1533,14 @@ function renderCombosPlay(play) {
       buildComboSelect('Telefonía',              PLANES.telefonia, 1, true) +
       buildComboSelect('Cable TV',               PLANES.cable,     2, true);
   }
+
+  // Restaurar selección previa (old()) si corresponde
+  if (presetFields && presetFields.length) {
+    document.querySelectorAll('.combo-plan').forEach((sel, i) => {
+      if (presetFields[i]) sel.value = presetFields[i];
+    });
+  }
+
   onComboChange();
 }
 
@@ -1564,15 +1557,16 @@ function onComboChange() {
 
 // ── LÍNEAS MÓVIL ─────────────────────────────────────
 let lineaCount = 0;
-function addLinea() {
+function addLinea(datos) {
   const i = lineaCount++;
   const tipoVenta = document.getElementById('inputTipoVentaMovil')?.value || '';
   const esPorta   = tipoVenta === 'porta';
+  const d = datos || {};
 
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td class="td-porta" style="${esPorta ? '' : 'display:none'}">
-      <input type="text" name="lineas[${i}][nro_portar]" class="linea-input" placeholder="9XX XXX XXX">
+      <input type="text" name="lineas[${i}][nro_portar]" class="linea-input" value="${d.nro_portar ?? ''}" placeholder="9XX XXX XXX">
     </td>
     <td>
       <select name="lineas[${i}][plan]" class="linea-select">
@@ -1592,13 +1586,15 @@ function addLinea() {
       </select>
     </td>
     <td class="td-porta" style="${esPorta ? '' : 'display:none'}">
-      <select name="lineas[${i}][operador_cedente]" class="linea-select">
+      <select name="lineas[${i}][operador_cedente]" class="linea-select" onchange="toggleOperadorOtro(this,${i})">
         <option value="">— Op. —</option>
         <option value="entel">Entel</option>
         <option value="movistar">Movistar</option>
         <option value="bitel">Bitel</option>
         <option value="otros">Otros</option>
       </select>
+      <input type="text" name="lineas[${i}][operador_cedente_otro]" class="linea-input" id="opOtro_${i}"
+             value="${d.operador_cedente_otro ?? ''}" placeholder="¿Cuál?" style="display:none;margin-top:4px;">
     </td>
     <td>
       <select name="lineas[${i}][equipo_sim]" class="linea-select">
@@ -1616,13 +1612,27 @@ function addLinea() {
     </td>
     <td>
       <input type="text" name="lineas[${i}][nro_wf]" class="linea-input" id="wf_${i}"
-             placeholder="6 dígitos" maxlength="6" style="display:none">
+             value="${d.nro_wf ?? ''}" placeholder="6 dígitos" maxlength="6" style="display:none">
     </td>
     <td>
       <button type="button" class="btn-remove-linea" onclick="removeLinea(this)">×</button>
     </td>
   `;
   document.getElementById('lineasBody').appendChild(tr);
+
+  // Restaurar selects (plan, operador_cedente, equipo_sim, descuento)
+  if (d.plan) tr.querySelector(`select[name="lineas[${i}][plan]"]`).value = d.plan;
+  if (d.operador_cedente) {
+    const selOp = tr.querySelector(`select[name="lineas[${i}][operador_cedente]"]`);
+    selOp.value = d.operador_cedente;
+    toggleOperadorOtro(selOp, i);
+  }
+  if (d.equipo_sim) tr.querySelector(`select[name="lineas[${i}][equipo_sim]"]`).value = d.equipo_sim;
+  if (d.descuento) {
+    const selDesc = tr.querySelector(`select[name="lineas[${i}][descuento]"]`);
+    selDesc.value = d.descuento;
+    toggleWf(selDesc, i);
+  }
 }
 
 function removeLinea(btn) {
@@ -1632,6 +1642,10 @@ function removeLinea(btn) {
 
 function toggleWf(select, i) {
   document.getElementById(`wf_${i}`).style.display = select.value === 'bajo_plantilla' ? 'block' : 'none';
+}
+
+function toggleOperadorOtro(select, i) {
+  document.getElementById(`opOtro_${i}`).style.display = select.value === 'otros' ? 'block' : 'none';
 }
 
 // ── TIPO INGRESO ─────────────────────────────────────
@@ -1749,12 +1763,30 @@ function getValidationErrors() {
     if (!inputRuc.value.trim()) errors.push('Ingresa el RUC de la empresa.');
     if (!document.querySelector('input[name="razon_social"]')?.value?.trim()) errors.push('Ingresa la razón social.');
   }
+  // Nota: nombre_representante, telefono_representante y correo se validan más abajo,
+  // usando siempre los campos del Paso 3 (son el único origen de estos datos,
+  // tanto para crear el lead nuevo como para la venta).
 
   const nombreRep = document.querySelector('input[name="nombre_representante"]')?.value?.trim();
   const tipoDoc   = document.querySelector('input[name="tipo_documento"]')?.value;
   const nroDoc    = document.getElementById('inputNroDoc')?.value?.trim();
   const telefono  = document.querySelector('input[name="telefono_representante"]')?.value?.trim();
   const correo    = document.querySelector('input[name="correo"]')?.value?.trim();
+
+// Validaciones de formato
+const ruc = document.querySelector('input[name="ruc"]')?.value?.trim();
+
+if (ruc && !/^\d{11}$/.test(ruc)) {
+    errors.push('El RUC debe tener exactamente 11 dígitos.');
+}
+
+if (telefono && !/^9\d{8}$/.test(telefono)) {
+    errors.push('El teléfono debe tener 9 dígitos y empezar con 9.');
+}
+
+if (correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+    errors.push('El correo electrónico no tiene un formato válido.');
+}
 
   if (!nombreRep) errors.push('Ingresa el nombre del representante.');
   if (!tipoDoc)   errors.push('Selecciona el tipo de documento.');
@@ -1846,12 +1878,83 @@ document.getElementById('formVenta').addEventListener('submit', function(e) {
 document.getElementById('formVenta').addEventListener('input',  checkSubmit);
 document.getElementById('formVenta').addEventListener('change', checkSubmit);
 
-// ── RESTAURAR SI HAY ERRORES DE SERVIDOR ─────────────
-@if($errors->any() && old('tipo'))
+// ── RESTAURAR TODO EL ESTADO DEL WIZARD TRAS UN ERROR DEL SERVIDOR ──
+function restoreBubbleFromOld(fieldName) {
+  if (!OLD_DATA[fieldName]) return null;
+  const bubble = Array.from(document.querySelectorAll('.bubble')).find(b => {
+    const m = b.getAttribute('onclick')?.match(new RegExp(`setBubble\\(this,\\s*'${fieldName}',\\s*'([^']+)'\\)`));
+    return m && m[1] === OLD_DATA[fieldName];
+  });
+  if (bubble) {
+    // Ejecuta exactamente lo que dispararía el click (incluye togglePorta*, onTipo*, etc.)
+    // eslint-disable-next-line no-new-func
+    new Function(bubble.getAttribute('onclick')).call(bubble);
+  }
+  return OLD_DATA[fieldName];
+}
+
+function restoreOldData() {
+  if (!OLD_DATA || Object.keys(OLD_DATA).length === 0) return;
+
+  // 1) Texto/número/fecha/select por name (los que ya tienen old() en Blade
+  //    quedan cubiertos; esto refuerza cualquier campo que no lo tuviera)
+  document.querySelectorAll('#formVenta input[name], #formVenta select[name]').forEach(el => {
+    if (['hidden','file','checkbox'].includes(el.type)) return;
+    const val = OLD_DATA[el.name];
+    if (val !== undefined && !el.value) el.value = val;
+  });
+
+  // 2) Tipo de servicio → dispara la cascada normal (deja visibles los pasos)
+  if (OLD_DATA.tipo) setTipo(OLD_DATA.tipo);
+
+  // 3) Burbujas simples
+  ['tipo_ingreso','tipo_venta_movil','tipo_venta_fija','tipo_documento',
+   'tecnologia','campana_fija','campana_movil','full_claro',
+   'tipo_entrega','rango_horario'].forEach(restoreBubbleFromOld);
+
+  if (OLD_DATA.tipo_documento) setDocLimit(OLD_DATA.tipo_documento);
+
+  // 4) Tipo de producto fija + combos de planes
+  if (OLD_DATA.tipo_producto_fija) {
+    const presetFields = Object.entries(PLAN_FIELD_BY_ID)
+      .filter(([, name]) => OLD_DATA[name] === '1')
+      .map(([id]) => id);
+    restoreBubbleFromOld('tipo_producto_fija');
+    renderCombosPlay(OLD_DATA.tipo_producto_fija, presetFields);
+  }
+
+  // 5) CAC seleccionado (móvil, recojo en CAC)
+  if (OLD_DATA.tipo_entrega === 'recojo_cac' && OLD_DATA.cac_id) {
+    document.getElementById('inputCacId').value = OLD_DATA.cac_id;
+    // No tenemos nombre/dirección sin volver a consultar al backend;
+    // se deja el id guardado para no perder la selección al reenviar.
+  }
+
+  // 6) Coordenadas de delivery (separadas en dos inputs visuales)
+  if (OLD_DATA.coordenadas_geodir) {
+    const [lat, lng] = OLD_DATA.coordenadas_geodir.split(',').map(s => s.trim());
+    if (lat) document.getElementById('inputGeoX').value = lat;
+    if (lng) document.getElementById('inputGeoY').value = lng;
+  }
+
+  // 7) Líneas móviles
+  if (Array.isArray(OLD_DATA.lineas) && OLD_DATA.lineas.length) {
+    document.getElementById('lineasBody').innerHTML = '';
+    lineaCount = 0;
+    OLD_DATA.lineas.forEach(linea => addLinea(linea));
+    togglePortaMovil(OLD_DATA.tipo_venta_movil || '');
+  }
+
+  updateProgress();
+  checkSubmit();
+
+  document.getElementById('serverErrors')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+@if($errors->any())
 window.addEventListener('DOMContentLoaded', () => {
-  const tipoOld = @json(old('tipo'));
-  if (tipoOld) setTipo(tipoOld);
-  document.getElementById('serverErrors')?.scrollIntoView({ behavior:'smooth', block:'center' });
+  restoreOldData();
+  document.getElementById('docsRestoreNotice').style.display = 'block';
 });
 @endif
 </script>

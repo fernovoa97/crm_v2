@@ -477,12 +477,13 @@
               onclick="openTipModal({{ $lead->id }}, '{{ addslashes($lead->razon_social) }}', '{{ $lead->ruc }}')">
               Tipificar
             </button>
-            <form method="POST" action="{{ route('admin.leads.release', $lead) }}" onsubmit="return confirm('¿Liberar este lead?')" style="display:inline;">
-              @csrf @method('PATCH')
-              <button type="submit" class="btn-tip" style="background:rgba(239,159,39,0.08);color:#fac775;border-color:rgba(239,159,39,0.2);">
-                Liberar
-              </button>
-            </form>
+            <form method="POST" action="{{ route('asesor.leads.release', $lead) }}" onsubmit="return confirm('¿Liberar este lead?')" style="display:inline;">
+    @csrf
+    @method('PATCH')
+    <button type="submit" class="btn-delete" style="background:rgba(239,159,39,0.08);color:#fac775;border-color:rgba(239,159,39,0.2);">
+        Liberar
+    </button>
+</form>
           </td>
         </tr>
         @empty

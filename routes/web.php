@@ -39,11 +39,9 @@ Route::middleware(['auth', 'es_jerarquia'])->prefix('admin')->name('admin.')->gr
     Route::post('leads/import', [LeadController::class, 'import'])->name('leads.import');
     Route::get('leads/export-wrong-number', [LeadController::class, 'exportWrongNumber'])->name('leads.export-wrong-number');
     Route::post('leads/import-wrong-number', [LeadController::class, 'importWrongNumber'])->name('leads.import-wrong-number');
-
     // 2. RUTAS CON PARÁMETROS
     Route::post('leads/{lead}/assign-single', [LeadController::class, 'assignSingle'])->name('leads.assign-single');
     Route::patch('leads/{lead}/release', [LeadController::class, 'release'])->name('leads.release');
-
     // 3. RESOURCE AL FINAL
     Route::resource('leads', LeadController::class);
 
@@ -60,7 +58,7 @@ Route::middleware(['auth', 'es_jerarquia'])->prefix('admin')->name('admin.')->gr
 Route::middleware(['auth', 'es_asesor'])->prefix('asesor')->name('asesor.')->group(function () {
     Route::get('leads', [LeadController::class, 'asesor'])->name('leads.index');
     Route::post('leads/tipificar', [LeadController::class, 'tipificar'])->name('leads.tipificar');
-
+    Route::patch('leads/{lead}/release', [LeadController::class, 'release'])->name('leads.release');
     // Ventas asesor — sin parámetros primero
     Route::get('ventas/create-directo', [VentaController::class, 'createDirecto'])->name('ventas.create-directo');
     Route::get('ventas/create', [VentaController::class, 'create'])->name('ventas.create');

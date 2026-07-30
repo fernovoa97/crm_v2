@@ -52,10 +52,10 @@
       background: linear-gradient(135deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.25) 60%, rgba(0,0,0,0.45) 100%);
     }
 
-    .slide-1 { background-image: url('/images/fotogari.png'); }
-    .slide-2 { background-image: url('/images/paseo.png'); }
-    .slide-3 { background-image: url('/images/cumpleaños.png'); }
-    .slide-4 { background-image: url('/images/aniversario.jpeg'); }
+    .slide-1 { background-image: url("{{ asset('images/fotogari.png') }}"); }
+    .slide-2 { background-image: url("{{ asset('images/paseo.png') }}"); }
+    .slide-3 { background-image: url("{{ asset('images/cumpleaños.png') }}"); }
+    .slide-4 { background-image: url("{{ asset('images/aniversario.jpeg') }}"); }
 
     .dots {
       position: absolute;
@@ -255,7 +255,7 @@
   <div class="login-card">
     <div class="brand">
       <div class="brand-logo">
-        <img src="/images/logo.jpg" alt="Logo"
+        <img src="{{ asset('images/logo.jpg') }}" alt="Logo"
              style="width:100%; height:100%; object-fit:contain; border-radius:10px;" />
       </div>
       <h2>Bienvenido</h2>
@@ -302,10 +302,10 @@
   ];
 
   const imageUrls = [
-    '/images/fotogari.png',
-    '/images/paseo.png',
-    '/images/cumpleaños.png',
-    '/images/aniversario.jpeg'
+    "{{ asset('images/fotogari.png') }}",
+    "{{ asset('images/paseo.png') }}",
+    "{{ asset('images/cumpleaños.png') }}",
+    "{{ asset('images/aniversario.jpeg') }}",
   ];
 
   const slides  = document.querySelectorAll('.slide');

@@ -65,42 +65,53 @@ class VentaController extends Controller
         } else {
             // Flujo directo: validar datos mínimos primero
             $request->validate([
-                'ruc'                      => 'required|string|max:20',
+                'ruc' => 'required|digits:11',
                 'razon_social'             => 'required|string|max:255',
                 'nombre_representante'     => 'required|string|max:255',
-                'telefono_representante'   => 'required|string|max:20',
+                'telefono_representante' => ['required','regex:/^9[0-9]{8}$/'],
                 'correo'                   => 'required|email',
             ]);
 
             if ($request->boolean('guardar_como_lead')) {
 
-    $lead = Lead::firstOrCreate(
-        ['ruc' => $request->ruc],
-        [
-            'razon_social' => $request->razon_social,
-            'nombre_rl'    => $request->nombre_representante,
-            'telf1'        => $request->telefono_representante,
-            'correo_rl'    => $request->correo,
-            'assigned_to'  => $user->id,
-            'tipificacion' => 'prospecto',
-            'segmento'     => $request->segmento,
-            'departamento' => $request->departamento,
-        ]
-    );
+                // Si ya existe un lead con este RUC, no lo reutilizamos a ciegas:
+                // podría pertenecer a otro asesor o ya ser cliente. Solo reusamos
+                // uno existente si ya está asignado a este mismo asesor.
+                $existente = Lead::where('ruc', $request->ruc)->first();
 
-} else {
+                if ($existente && (int) $existente->assigned_to !== (int) $user->id) {
+                    return back()
+                        ->withErrors(['ruc' => 'Ya existe un lead registrado con este RUC, asignado a otro asesor. Contacta a tu supervisor si crees que esto es un error.'])
+                        ->withInput();
+                }
 
-    // Lead temporal solo para crear la venta
-    $lead = new Lead([
-        'ruc'            => $request->ruc,
-        'razon_social'   => $request->razon_social,
-        'nombre_rl'      => $request->nombre_representante,
-        'telf1'          => $request->telefono_representante,
-        'correo_rl'      => $request->correo,
-        'segmento'       => $request->segmento,
-        'departamento'   => $request->departamento,
-    ]);
-}
+                $lead = Lead::firstOrCreate(
+                    ['ruc' => $request->ruc],
+                    [
+                        'razon_social' => $request->razon_social,
+                        'nombre_rl'    => $request->nombre_representante,
+                        'telf1'        => $request->telefono_representante,
+                        'correo_rl'    => $request->correo,
+                        'assigned_to'  => $user->id,
+                        'tipificacion' => 'prospecto',
+                        'segmento'     => $request->segmento,
+                        'departamento' => $request->departamento,
+                    ]
+                );
+
+            } else {
+
+                // Lead temporal solo para crear la venta
+                $lead = new Lead([
+                    'ruc'            => $request->ruc,
+                    'razon_social'   => $request->razon_social,
+                    'nombre_rl'      => $request->nombre_representante,
+                    'telf1'          => $request->telefono_representante,
+                    'correo_rl'      => $request->correo,
+                    'segmento'       => $request->segmento,
+                    'departamento'   => $request->departamento,
+                ]);
+            }
         }
 
         // ── Validación ────────────────────────────────────────────

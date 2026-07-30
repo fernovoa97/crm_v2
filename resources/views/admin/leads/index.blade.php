@@ -86,10 +86,18 @@
     border: 1px solid rgba(255,255,255,0.07);
     border-radius: 12px;
     padding: 16px 18px;
+     text-align: center;
   }
 
-  .stat-label { font-size: 11px; color: rgba(255,255,255,0.35); margin-bottom: 8px; font-weight: 500; }
-  .stat-value { font-size: 24px; font-weight: 600; color: #fff; }
+ .stat-label {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 18px;
+}.stat-value {text-align: center;
+    width: 100%; font-size: 24px; font-weight: 600; color: #fff; }
   .stat-badge {
     display: inline-block; font-size: 10px;
     padding: 2px 8px; border-radius: 20px;
@@ -309,7 +317,7 @@
     <div class="stat-label">Total Leads</div>
     <div class="stat-value">{{ $stats['total'] }}</div>
     <div class="stat-badge" style="background:rgba(47,202,245,.10);color:#2FCAF5;">
-      En base
+      
     </div>
   </div>
 
@@ -317,7 +325,7 @@
     <div class="stat-label">Sin asignar</div>
     <div class="stat-value">{{ $stats['sin_asignar'] }}</div>
     <div class="stat-badge" style="background:rgba(47,202,245,.10);color:#2FCAF5;">
-      En base
+      
     </div>
   </div>
 
@@ -325,7 +333,7 @@
     <div class="stat-label">Pendiente</div>
     <div class="stat-value">{{ $stats['pendiente'] }}</div>
     <div class="stat-badge" style="background:rgba(136,135,128,.15);color:#b4b2a9;">
-      En base
+      
     </div>
   </div>
 
@@ -333,7 +341,7 @@
     <div class="stat-label">Prospectos</div>
     <div class="stat-value">{{ $stats['prospecto'] }}</div>
     <div class="stat-badge" style="background:rgba(47,202,245,.12);color:#2FCAF5;">
-      En base
+      
     </div>
   </div>
 
@@ -341,7 +349,7 @@
     <div class="stat-label">Volver a llamar</div>
     <div class="stat-value">{{ $stats['volver_llamar'] }}</div>
     <div class="stat-badge" style="background:rgba(239,159,39,.15);color:#fac775;">
-      En base
+      
     </div>
   </div>
 
@@ -349,7 +357,7 @@
     <div class="stat-label">No interesados</div>
     <div class="stat-value">{{ $stats['no_interesado'] }}</div>
     <div class="stat-badge" style="background:rgba(216,90,48,.15);color:#f0997b;">
-      En base
+      
     </div>
   </div>
 
@@ -357,7 +365,7 @@
     <div class="stat-label">No califica</div>
     <div class="stat-value">{{ $stats['no_califica'] }}</div>
     <div class="stat-badge" style="background:rgba(162,45,45,.15);color:#f09595;">
-      En base
+      
     </div>
   </div>
 
@@ -365,7 +373,7 @@
     <div class="stat-label">Lista negra</div>
     <div class="stat-value">{{ $stats['lista_negra'] }}</div>
     <div class="stat-badge" style="background:rgba(50,50,60,.50);color:rgba(255,255,255,.35);">
-      En base
+      
     </div>
   </div>
 
@@ -373,7 +381,7 @@
     <div class="stat-label">N° equivocados</div>
     <div class="stat-value">{{ $stats['numero_equivocado'] }}</div>
     <div class="stat-badge" style="background:rgba(127,119,221,.15);color:#afa9ec;">
-      En base
+      
     </div>
   </div>
 
@@ -456,9 +464,12 @@
                 @endif
               @else
                 <form method="POST" action="{{ route('admin.leads.release', $lead) }}" onsubmit="return confirm('¿Liberar este lead?')" style="display:inline;">
-                  @csrf @method('PATCH')
-                  <button type="submit" class="btn-delete" style="background:rgba(239,159,39,0.08);color:#fac775;border-color:rgba(239,159,39,0.2);">Liberar</button>
-                </form>
+    @csrf
+    @method('PATCH')
+    <button type="submit" class="btn-delete" style="background:rgba(239,159,39,0.08);color:#fac775;border-color:rgba(239,159,39,0.2);">
+        Liberar
+    </button>
+</form>
               @endif
             </div>
           </td>

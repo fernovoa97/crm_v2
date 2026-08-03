@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\LeadController;
 use App\Http\Controllers\Admin\VentaController;
 use App\Http\Controllers\Admin\CacController;
+use App\Http\Controllers\Admin\ReporteController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -37,6 +38,7 @@ Route::middleware(['auth', 'es_jerarquia'])->prefix('admin')->name('admin.')->gr
     // 1. RUTAS DE ACCIÓN PRIMERO (Sin parámetros)
     Route::post('leads/assign', [LeadController::class, 'assign'])->name('leads.assign');
     Route::post('leads/import', [LeadController::class, 'import'])->name('leads.import');
+    Route::get('leads/template', [LeadController::class, 'downloadTemplate'])->name('leads.template');
     Route::get('leads/export-wrong-number', [LeadController::class, 'exportWrongNumber'])->name('leads.export-wrong-number');
     Route::post('leads/import-wrong-number', [LeadController::class, 'importWrongNumber'])->name('leads.import-wrong-number');
     // 2. RUTAS CON PARÁMETROS
@@ -46,6 +48,8 @@ Route::middleware(['auth', 'es_jerarquia'])->prefix('admin')->name('admin.')->gr
     Route::resource('leads', LeadController::class);
 
     // Ventas admin — sin parámetros primero
+    Route::get('reportes/leads', [ReporteController::class, 'leads'])->name('reportes.leads');
+
     Route::get('ventas', [VentaController::class, 'adminIndex'])->name('ventas.index');
     Route::get('ventas/documentos/{documento}', [VentaController::class, 'downloadDocumento'])->name('ventas.documento.download');
     // Con parámetros al final

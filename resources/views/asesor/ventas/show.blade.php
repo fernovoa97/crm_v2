@@ -424,6 +424,7 @@
               <th>Plan</th>
               <th>Operador cedente</th>
               <th>Equipo / SIM</th>
+              <th>Modelo</th>
               <th>Descuento</th>
               <th>Large</th>
             </tr>
@@ -435,6 +436,7 @@
               <td>{{ str_replace(['max_negocios_', 'max_ilimitado_'], ['MN +', 'MI +'], $linea->plan) }}</td>
               <td>{{ ucfirst($linea->operador_cedente ?? '—') }}</td>
               <td>{{ ucfirst(str_replace('_', ' ', $linea->equipo_sim)) }}</td>
+              <td>{{ $linea->modelo_equipo ?? '—' }}</td>
               <td>{{ ucfirst(str_replace('_', ' ', $linea->descuento)) }}</td>
               <td>{{ $linea->large_asociada ?? '—' }}</td>
             </tr>

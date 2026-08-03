@@ -273,7 +273,7 @@ html.light .alert-error { background: rgba(255,80,80,0.08); border-color: rgba(2
       </svg>
       CACs
     </a>
-    <a href="#" class="nav-item {{ request()->routeIs('reportes.*') ? 'active' : '' }}">
+    <a href="{{ route('admin.reportes.leads') }}" class="nav-item {{ request()->routeIs('admin.reportes.*') ? 'active' : '' }}">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="M2 12l3-4 3 2 3-5 3 3"/>
         <path d="M2 14h12"/>
@@ -291,7 +291,7 @@ html.light .alert-error { background: rgba(255,80,80,0.08); border-color: rgba(2
       </svg>
       Leads
     </a>
-    <a href="#" class="nav-item">
+    <a href="{{ route('admin.reportes.leads') }}" class="nav-item {{ request()->routeIs('admin.reportes.*') ? 'active' : '' }}">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="M2 12l3-4 3 2 3-5 3 3"/>
         <path d="M2 14h12"/>

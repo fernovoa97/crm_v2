@@ -87,6 +87,12 @@
     border-radius: 12px;
     padding: 16px 18px;
      text-align: center;
+    transition: border-color .2s, box-shadow .2s;
+  }
+
+  .stat-card.active-filter {
+    border-color: #fac775;
+    box-shadow: 0 0 0 2px rgba(250,199,117,0.2);
   }
 
  .stat-label {
@@ -236,6 +242,35 @@
     font-size: 12px; color: rgba(255,255,255,0.35);
   }
 
+  .crm-pagination { display: flex; align-items: center; gap: 4px; }
+
+  .crm-page-link {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 28px; height: 28px; padding: 0 6px;
+    border-radius: 6px; font-size: 12px; font-weight: 600;
+    color: rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    text-decoration: none; cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+
+  .crm-page-link:hover { background: rgba(47,202,245,0.1); color: #2FCAF5; border-color: rgba(47,202,245,0.25); }
+
+  .crm-page-link.active {
+    background: rgba(47,202,245,0.15); color: #2FCAF5;
+    border-color: rgba(47,202,245,0.35); cursor: default;
+  }
+
+  .crm-page-link.disabled {
+    color: rgba(255,255,255,0.15); cursor: not-allowed;
+    background: transparent; border-color: rgba(255,255,255,0.04);
+  }
+  .crm-page-link.disabled:hover { background: transparent; color: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.04); }
+
+  .crm-page-arrow { font-size: 15px; font-weight: 700; }
+  .crm-page-dots { border: none; background: transparent; cursor: default; }
+
   /* Modales */
   .modal-overlay {
     display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
@@ -302,6 +337,10 @@
   html.light .modal-box { background: #fff; border-color: #d0eaf8; }
   html.light .modal-title { color: #0f0f13; }
   html.light .assign-name { color: #0f0f13; }
+  html.light .crm-page-link { background: #f0f7ff; border-color: #c0dff5; color: rgba(0,0,0,0.55); }
+  html.light .crm-page-link:hover { background: rgba(47,202,245,0.12); }
+  html.light .crm-page-link.active { background: rgba(47,202,245,0.18); }
+  html.light .crm-page-link.disabled { background: transparent; color: rgba(0,0,0,0.2); border-color: #e8f3fb; }
 </style>
 
 @php
@@ -321,6 +360,7 @@
     </div>
   </div>
 
+  @if($user->isAdmin())
   <div class="stat-card">
     <div class="stat-label">Sin asignar</div>
     <div class="stat-value">{{ $stats['sin_asignar'] }}</div>
@@ -328,6 +368,15 @@
       
     </div>
   </div>
+  @elseif($user->isJefe() || $user->isSupervisor())
+  <div class="stat-card" id="cardPendienteRepartir" onclick="toggleFiltroPendienteRepartir()" style="cursor:pointer;" title="Leads asignados a ti que aún no has repartido a tu equipo">
+    <div class="stat-label">Pendiente de repartir</div>
+    <div class="stat-value">{{ $stats['pendiente_repartir'] }}</div>
+    <div class="stat-badge" style="background:rgba(250,199,117,.12);color:#fac775;">
+      Clic para filtrar
+    </div>
+  </div>
+  @endif
 
   <div class="stat-card">
     <div class="stat-label">Pendiente</div>
@@ -434,7 +483,7 @@
       </thead>
       <tbody>
         @forelse($leads as $lead)
-        <tr data-tip="{{ $lead->tipificacion }}" data-id="{{ $lead->id }}">
+        <tr data-tip="{{ $lead->tipificacion }}" data-id="{{ $lead->id }}" data-assigned-id="{{ $lead->assigned_to ?? '' }}">
           <td style="font-family:monospace;font-size:12px;">{{ $lead->ruc }}</td>
           <td><div style="font-weight:500;color:#fff;">{{ $lead->razon_social }}</div></td>
           <td>
@@ -449,7 +498,13 @@
             </span>
           </td>
           @if($isManager)
-          <td>{{ $lead->assignedTo?->name ?? 'Sin asignar' }}</td>
+          <td>
+            @if($lead->assigned_to === $user->id)
+              <span style="color:#fac775;font-weight:600;">Sin repartir (en tu bandeja)</span>
+            @else
+              {{ $lead->assignedTo?->name ?? 'Sin asignar' }}
+            @endif
+          </td>
           @endif
           <td>
             <div style="display:flex;gap:6px;">
@@ -483,7 +538,7 @@
 
   <div class="pagination-wrap">
     <span>Mostrando {{ $leads->firstItem() ?? 0 }}–{{ $leads->lastItem() ?? 0 }} de {{ $leads->total() }}</span>
-    {{ $leads->links() }}
+    {{ $leads->links('partials.pagination') }}
   </div>
 </div>
 
@@ -495,6 +550,19 @@
   <div class="modal-box">
     <div class="modal-title">Importar leads desde Excel</div>
     <div class="modal-sub">El archivo debe tener las columnas RUC y Razón Social.</div>
+    <a href="{{ route('admin.leads.template') }}" style="
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(93,202,165,0.12); color: #5dcaa5;
+      border: 1px solid rgba(93,202,165,0.25);
+      padding: 7px 14px; border-radius: 8px;
+      font-size: 12px; font-weight: 600;
+      text-decoration: none; margin-bottom: 14px;
+    ">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Descargar plantilla de ejemplo
+    </a>
     <form method="POST" action="{{ route('admin.leads.import') }}" enctype="multipart/form-data">
       @csrf
       <div class="file-drop" onclick="document.getElementById('fileInput').click()">
@@ -518,7 +586,7 @@
 <div class="modal-overlay" id="modalBulk">
   <div class="modal-box">
     <div class="modal-title">Asignar leads automáticamente</div>
-    <div class="modal-sub">Se repartirán los leads libres según los filtros aplicados.</div>
+    <div class="modal-sub">Se repartirán tus leads libres, sin importar la página o el filtro que tengas activo en pantalla.</div>
 
     <input
       type="text"
@@ -608,13 +676,27 @@ function closeModals() {
   if (search) search.value = '';
 }
 
+const CURRENT_USER_ID = {{ $user->id }};
+const CURRENT_USER_IS_ADMIN = @json($user->isAdmin());
+// Conteo REAL de leads libres/pendientes de repartir en toda la base de
+// datos (no solo los de la página actual) — mismo valor que las tarjetas.
+const FREE_LEADS_COUNT = {{ $user->isAdmin() ? $stats['sin_asignar'] : $stats['pendiente_repartir'] }};
+let filtroPendienteRepartir = false;
+
+function toggleFiltroPendienteRepartir() {
+  filtroPendienteRepartir = !filtroPendienteRepartir;
+  document.getElementById('cardPendienteRepartir')?.classList.toggle('active-filter', filtroPendienteRepartir);
+  filterTable();
+}
+
 function filterTable() {
   const q   = document.getElementById('searchInput').value.toLowerCase();
   const tip = document.getElementById('filterTip').value;
   document.querySelectorAll('#leadsTable tbody tr[data-id]').forEach(row => {
     const matchSearch = row.textContent.toLowerCase().includes(q);
     const matchTip    = !tip || row.dataset.tip === tip;
-    row.style.display = (matchSearch && matchTip) ? '' : 'none';
+    const matchBandeja = !filtroPendienteRepartir || row.dataset.assignedId === String(CURRENT_USER_ID);
+    row.style.display = (matchSearch && matchTip && matchBandeja) ? '' : 'none';
   });
 }
 
@@ -622,19 +704,13 @@ function openBulkModal() {
   document.getElementById('bulkUserList').innerHTML = '';
   document.getElementById('assignedCount').textContent = 0;
 
-  const visibleRows = [];
-  document.querySelectorAll('#leadsTable tbody tr[data-id]').forEach(row => {
-    if (row.offsetParent !== null) visibleRows.push(row);
-  });
+  if (FREE_LEADS_COUNT === 0) {
+    return alert(CURRENT_USER_IS_ADMIN
+      ? 'No hay leads libres para asignar.'
+      : 'No tienes leads pendientes de repartir en tu bandeja.');
+  }
 
-  if (!visibleRows.length) return alert('No hay leads para asignar.');
-
-  // Contar solo los sin asignar (td con texto "Sin asignar")
-  const freeRows = visibleRows.filter(row => row.textContent.includes('Sin asignar'));
-
-  if (!freeRows.length) return alert('No hay leads libres para asignar.');
-
-  document.getElementById('assignedTotal').textContent = freeRows.length;
+  document.getElementById('assignedTotal').textContent = FREE_LEADS_COUNT;
   renderUsersList('bulkUserList', true);
   document.getElementById('modalBulk').style.display = 'flex';
 }
@@ -672,7 +748,11 @@ function updateAssignedCount() {
   let total = 0;
   document.querySelectorAll('.bulk-qty').forEach(i => total += parseInt(i.value) || 0);
   const el = document.getElementById('assignedCount');
-  if (el) el.textContent = total;
+  const disponibles = parseInt(document.getElementById('assignedTotal').textContent) || 0;
+  if (el) {
+    el.textContent = total;
+    el.style.color = total > disponibles ? '#ff9090' : '';
+  }
 }
 
 function addHiddenInput(form, name, value) {
@@ -689,15 +769,10 @@ function submitBulkAssign() {
   // Limpiar inputs dinámicos anteriores SIN tocar el _token
   form.querySelectorAll('input:not([name="_token"])').forEach(el => el.remove());
 
-  // Recoger filas visibles con offsetParent (igual que openBulkModal)
-  const visibleRows = [];
-  document.querySelectorAll('#leadsTable tbody tr[data-id]').forEach(row => {
-    if (row.offsetParent !== null) {
-      visibleRows.push(row);
-      addHiddenInput(form, 'lead_ids[]', row.dataset.id);
-    }
-  });
-
+  // IMPORTANTE: ya no se envían lead_ids desde el DOM (eso dependía de qué
+  // página estabas viendo y causaba el bug de "Disponibles: 50" cuando en
+  // realidad había 100). El backend selecciona directo de la base de datos
+  // el pool real de leads libres/pendientes de repartir.
   let total = 0;
   document.querySelectorAll('.bulk-qty').forEach(i => {
     const val = parseInt(i.value) || 0;
@@ -709,7 +784,12 @@ function submitBulkAssign() {
   });
 
   if (total === 0) return alert('Ingresa cantidades.');
-  if (total > visibleRows.length) return alert('La cantidad excede los leads disponibles.');
+  if (total > FREE_LEADS_COUNT) {
+    return alert(
+      `La cantidad ingresada (${total}) supera los leads disponibles para repartir (${FREE_LEADS_COUNT}). ` +
+      `Ajusta las cantidades: no puedes asignar más de los que realmente están libres.`
+    );
+  }
 
   form.submit();
 }

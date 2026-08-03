@@ -31,7 +31,7 @@
 
 {{-- El formulario de edición es idéntico al de create, pero apunta a PUT --}}
 <form method="POST" action="{{ route('asesor.ventas.update', $venta) }}"
-      enctype="multipart/form-data" id="formEditVenta">
+      enctype="multipart/form-data" id="formVenta">
   @csrf
   @method('PUT')
 

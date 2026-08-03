@@ -11,12 +11,18 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Blacklist;
 
 use App\Exports\WrongNumberExport;
+use App\Exports\LeadsTemplateExport;
 use App\Imports\WrongNumberImport;
 
 
 
 class LeadController extends Controller
 {
+    public function downloadTemplate()
+{
+    return Excel::download(new LeadsTemplateExport(), 'plantilla_leads.xlsx');
+}
+
     public function exportWrongNumber()
 {
     if (!auth()->user()->isAdmin()) {
@@ -82,6 +88,7 @@ public function index()
 
     } else {
 
+        $ids = collect([$user->id]);
         $query->where('assigned_to', $user->id);
         $availableUsers = collect();
     }
@@ -90,20 +97,31 @@ public function index()
 
     /*
     |--------------------------------------------------------------------------
-    | Estadísticas globales
+    | Estadísticas — mismo scope que el listado (admin ve global, el resto
+    | solo su propia jerarquía/equipo)
     |--------------------------------------------------------------------------
     */
 
+    $statsQuery = fn () => $user->isAdmin() ? Lead::query() : Lead::whereIn('assigned_to', $ids);
+
     $stats = [
-        'total'             => Lead::count(),
-        'sin_asignar'       => Lead::whereNull('assigned_to')->count(),
-        'pendiente'         => Lead::where('tipificacion', 'pendiente')->count(),
-        'prospecto'         => Lead::where('tipificacion', 'prospecto')->count(),
-        'volver_llamar'     => Lead::where('tipificacion', 'volver_llamar')->count(),
-        'no_interesado'     => Lead::where('tipificacion', 'no_interesado')->count(),
-        'no_califica'       => Lead::where('tipificacion', 'no_califica')->count(),
-        'lista_negra'       => Lead::where('tipificacion', 'lista_negra')->count(),
-        'numero_equivocado' => Lead::where('tipificacion', 'numero_equivocado')->count(),
+        'total'             => $statsQuery()->count(),
+        // "Sin asignar" es el pool general de leads sin dueño: solo tiene
+        // sentido para admin, que es quien puede repartirlo (ver LeadController@assign).
+        'sin_asignar'       => $user->isAdmin() ? Lead::whereNull('assigned_to')->count() : 0,
+        // Para jefe/supervisor: leads que están asignados a ellos mismos (su
+        // "bandeja") y que aún no han delegado a su equipo. Es el equivalente
+        // a "sin asignar" pero dentro de su propio scope.
+        'pendiente_repartir' => ($user->isJefe() || $user->isSupervisor())
+            ? Lead::where('assigned_to', $user->id)->count()
+            : 0,
+        'pendiente'         => $statsQuery()->where('tipificacion', 'pendiente')->count(),
+        'prospecto'         => $statsQuery()->where('tipificacion', 'prospecto')->count(),
+        'volver_llamar'     => $statsQuery()->where('tipificacion', 'volver_llamar')->count(),
+        'no_interesado'     => $statsQuery()->where('tipificacion', 'no_interesado')->count(),
+        'no_califica'       => $statsQuery()->where('tipificacion', 'no_califica')->count(),
+        'lista_negra'       => $statsQuery()->where('tipificacion', 'lista_negra')->count(),
+        'numero_equivocado' => $statsQuery()->where('tipificacion', 'numero_equivocado')->count(),
     ];
 
     /*
@@ -141,13 +159,11 @@ public function index()
             'user_ids.*'  => 'exists:users,id',
             'user_qtys'   => 'required|array',
             'user_qtys.*' => 'integer|min:1',
-            'lead_ids'    => 'required|array', // Validamos que vengan los IDs de leads
         ]);
 
         $user     = auth()->user();
         $userIds  = $request->user_ids;
         $userQtys = $request->user_qtys;
-        $leadIds  = $request->lead_ids;
 
         // 🔐 1. Validar permisos de los usuarios destino
         foreach ($userIds as $targetId) {
@@ -157,33 +173,37 @@ public function index()
             }
         }
 
-        // 🧠 2. Construir query — SOLO leads sin asignar
-        $query = Lead::whereIn('id', $leadIds)
-                    ->whereNull('assigned_to');
-
-        if (!$user->isAdmin()) {
-            if ($user->isJefe()) {
-                $supervisorIds = $user->subordinates()->pluck('id');
-                $asesorIds     = User::whereIn('supervisor_id', $supervisorIds)->pluck('id');
-                $myScopeIds    = collect([$user->id])->merge($supervisorIds)->merge($asesorIds);
-            } elseif ($user->isSupervisor()) {
-                $asesorIds  = $user->subordinates()->pluck('id');
-                $myScopeIds = collect([$user->id])->merge($asesorIds);
-            } else {
-                return back()->with('error', 'No tienes permisos para asignar leads.');
-            }
-            // El scope aquí ya no filtra assigned_to porque son todos NULL
-            // Solo validamos que los lead_ids pertenezcan a leads accesibles por este usuario
-            $query->whereIn('id', Lead::whereIn('assigned_to', $myScopeIds)
-                                        ->orWhereNull('assigned_to')
-                                        ->pluck('id'));
+        // 🧠 2. Pool de leads libres según el rol — se consulta directo en BD,
+        // NUNCA se depende de qué leads llegaron desde el navegador (esos
+        // dependían de la página/paginación actual y podían estar incompletos).
+        if ($user->isAdmin()) {
+            // Admin reparte únicamente del pool general de leads sin asignar
+            $query = Lead::whereNull('assigned_to');
+        } elseif ($user->isJefe() || $user->isSupervisor()) {
+            // Jefe/Supervisor solo pueden redistribuir leads que están en su
+            // propia bandeja (asignados a ellos mismos, aún sin delegar).
+            $query = Lead::where('assigned_to', $user->id);
+        } else {
+            return back()->with('error', 'No tienes permisos para asignar leads.');
         }
 
-        $leads = $query->get();
+        // 🚧 Validar que la cantidad total pedida no supere los leads
+        // realmente disponibles en todo el pool (todas las páginas).
+        $totalPedido = array_sum(array_map('intval', $userQtys));
+        $poolCount   = (clone $query)->count();
 
-        if ($leads->isEmpty()) {
-            return back()->with('error', 'No se encontraron leads válidos para asignar.');
+        if ($poolCount === 0) {
+            return back()->with('error', 'No tienes leads disponibles para repartir.');
         }
+
+        if ($totalPedido > $poolCount) {
+            return back()->with('error',
+                "Pediste asignar {$totalPedido} leads, pero solo tienes {$poolCount} disponibles para repartir."
+            );
+        }
+
+        // Los más antiguos primero (los que llevan más tiempo esperando)
+        $leads = $query->orderBy('created_at')->limit($totalPedido)->get();
 
         // ⚖️ 3. Distribución
         $index = 0;

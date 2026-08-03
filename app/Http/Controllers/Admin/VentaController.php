@@ -70,6 +70,7 @@ class VentaController extends Controller
                 'nombre_representante'     => 'required|string|max:255',
                 'telefono_representante' => ['required','regex:/^9[0-9]{8}$/'],
                 'correo'                   => 'required|email',
+                'segmento'                 => 'nullable|in:micro,pyme,nuevo,mayores',
             ]);
 
             if ($request->boolean('guardar_como_lead')) {
@@ -144,7 +145,7 @@ class VentaController extends Controller
                 'rango_horario'       => 'required|in:sla_3h,9-11,11-1,2-4,4-6',
                 'lineas'              => 'required|array|min:1',
                 'lineas.*.plan'       => 'required|string',
-                'lineas.*.equipo_sim' => 'required|in:sim_card,equipo,sim_card_equipo',
+                'lineas.*.equipo_sim' => 'required|in:sim_card,sim_card_equipo',
                 'lineas.*.descuento'  => 'required|in:no_aplica,50%,bajo_plantilla',
             ]);
         }
@@ -223,6 +224,7 @@ class VentaController extends Controller
                     'operador_cedente'      => $linea['operador_cedente'] ?? null,
                     'operador_cedente_otro' => $linea['operador_cedente_otro'] ?? null,
                     'equipo_sim'            => $linea['equipo_sim'],
+                    'modelo_equipo'         => $linea['modelo_equipo'] ?? null,
                     'descuento'             => $linea['descuento'],
                     'nro_wf'                => $linea['nro_wf'] ?? null,
                     'large_asociada'        => $linea['large_asociada'] ?? null,
@@ -508,6 +510,7 @@ class VentaController extends Controller
                     'operador_cedente'      => $linea['operador_cedente'] ?? null,
                     'operador_cedente_otro' => $linea['operador_cedente_otro'] ?? null,
                     'equipo_sim'            => $linea['equipo_sim'],
+                    'modelo_equipo'         => $linea['modelo_equipo'] ?? null,
                     'descuento'             => $linea['descuento'],
                     'nro_wf'                => $linea['nro_wf'] ?? null,
                     'large_asociada'        => $linea['large_asociada'] ?? null,

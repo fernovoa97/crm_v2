@@ -13,6 +13,7 @@ class VentaLinea extends Model
         'operador_cedente',
         'operador_cedente_otro',
         'equipo_sim',
+        'modelo_equipo',
         'descuento',
         'nro_wf',
         'large_asociada',
